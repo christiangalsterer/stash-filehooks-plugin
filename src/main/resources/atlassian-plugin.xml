@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+  <plugin-info>
+    <description>${project.description}</description>
+    <version>${project.version}</version>
+    <vendor name="${project.organization.name}" url="${project.organization.url}"/>
+    <param name="atlassian-data-center-compatible">true</param>
+    <param name="plugin-icon">images/pluginIcon.png</param>
+    <param name="plugin-logo">images/pluginLogo.png</param>
+  </plugin-info>
+
+  <component-import key="commitService" interface="com.atlassian.stash.commit.CommitService"/>
+  <component-import key="gitCmdBuilderFactory" interface="com.atlassian.stash.scm.git.GitCommandBuilderFactory"/>
+
+  <resource type="i18n" name="i18n" location="org.christiangalsterer.stashfile-hooks-plugin"/>
+  <repository-hook key="filesize-hook" name="File Size Hook" i18n-name-key="filesize-hook.name" class="org.christiangalsterer.stash.filehooks.plugin.hook.FileSizeHook">
+    <description key="filesize-hook.description">Reject commits that contain files larger a configured file size limit.</description>
+    <icon>icon-example.png</icon>
+    <config-form name="File Size Hook Configuration" key="filesize-hook-config">
+      <view>stash.filehooks.size.formContents</view>
+      <directory location="/static/"/>
+    </config-form>
+  </repository-hook>
+
+</atlassian-plugin>

@@ -1,0 +1,27 @@
+{namespace stash.filehooks.size}
+
+/**
+ * @param config
+ * @param? errors
+ */
+{template .formContents}
+
+    {call aui.form.textField}
+        {param id: 'pattern-1' /}
+        {param value: $config['pattern-1'] /}
+        {param isRequired: true /}
+        {param labelContent: 'Pattern' /}
+        {param descriptionText: 'Pattern for the path and file name (e.g. \'.*\' for all files)' /}
+        {param errorTexts: $errors ? $errors['pattern-1'] : null /}
+    {/call}
+
+    {call aui.form.textField}
+        {param id: 'size-1' /}
+        {param value: $config['size-1'] /}
+        {param isRequired: true /}
+        {param labelContent: 'Size' /}
+        {param descriptionText: 'Maximum allowed file size (in bytes)' /}
+        {param errorTexts: $errors ? $errors['size-1'] : null /}
+    {/call}
+
+{/template}
