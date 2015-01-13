@@ -19,3 +19,4 @@ The following example rejects all files larger then 1MB (1048576 bytes).
 
 # Roadmap
 * Reject commits containing files which match a regular expression.
+* Allow different file size limits for different files.
