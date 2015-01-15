@@ -13,7 +13,7 @@ The following example rejects all files larger then 1MB (1048576 bytes).
 
 # Releases
 
-1.0.0 (2015-01-XX)
+1.0.0 (2015-01-15)
 
 * Reject commits containing files which exceed a configurable file size. Files can be identified by regular expressions.
 
