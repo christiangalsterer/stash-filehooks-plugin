@@ -15,8 +15,8 @@
   <resource type="i18n" name="i18n" location="org.christiangalsterer.stashfile-hooks-plugin"/>
   <repository-hook key="filesize-hook" name="File Size Hook" i18n-name-key="filesize-hook.name" class="org.christiangalsterer.stash.filehooks.plugin.hook.FileSizeHook">
     <description key="filesize-hook.description">Reject commits that contain files larger a configured file size limit.</description>
-    <icon>icon-example.png</icon>
-    <config-form name="File Size Hook Configuration" key="filesize-hook-config">
+    <!--<icon>icon-example.png</icon>-->
+    <config-form name="File Size Hook Configuration" key="filesize-hook-config-form">
       <view>stash.filehooks.size.formContents</view>
       <directory location="/static/"/>
     </config-form>

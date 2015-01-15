@@ -8,7 +8,7 @@
         <name>Christian Galsterer</name>
         <url>https://github.com/christiangalsterer/stash-filehooks-plugin</url>
     </organization>
-    <name>stash-filehooks-plugin</name>
+    <name>File Hooks Plugin</name>
     <description>Various hooks to check file attributes, like size, name.</description>
     <packaging>atlassian-plugin</packaging>
     <dependencyManagement>
@@ -125,8 +125,8 @@
         </plugins>
     </build>
     <properties>
-        <stash.version>3.5.1</stash.version>
-        <stash.data.version>3.5.1</stash.data.version>
+        <stash.version>3.6.0</stash.version>
+        <stash.data.version>3.6.0</stash.data.version>
         <amps.version>5.0.4</amps.version>
         <plugin.testrunner.version>1.2.0</plugin.testrunner.version>
     </properties>
