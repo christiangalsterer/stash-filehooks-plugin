@@ -28,6 +28,7 @@ The following example rejects all files matching the pattern **readme.md**
   * Fixes: [Plugin crashes when pushing a branch delete #2](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/2)
 * File Name Hook:
   * New hook which allows to check on the file name and reject pushes if files matches the specified pattern
+  
 
 1.0.0 (2015-01-15)
 
