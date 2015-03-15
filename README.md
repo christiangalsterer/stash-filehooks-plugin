@@ -9,13 +9,13 @@ The plugin is available in the [Atlassian Marketplace](https://marketplace.atlas
 In order to configure the hook go to your repository and select **Settings** -> **Hooks** -> **File Size Hook**.
 The following example rejects all files larger then 1MB (1048576 bytes).
 
-![File Size Hook Configuration](screenshots/filesize-hook-config.png)
+![File Size Hook Configuration](screenshots/file-hooks-plugin-filesize-hook-configuration.png)
 
 ## File Name Hook
 In order to configure the hook go to your repository and select **Settings** -> **Hooks** -> **File Name Hook**.
 The following example rejects all files matching the pattern **readme.md**
 
-![File Size Hook Configuration](screenshots/filesize-name-config.png)
+![File Size Hook Configuration](screenshots/file-hooks-plugin-filename-hook-configuration.png)
 
 # Releases
 
