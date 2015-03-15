@@ -11,13 +11,34 @@
 
   <component-import key="commitService" interface="com.atlassian.stash.commit.CommitService"/>
   <component-import key="gitCmdBuilderFactory" interface="com.atlassian.stash.scm.git.GitCommandBuilderFactory"/>
+  <component-import key="com.atlassian.stash.i18n.I18nService" interface="com.atlassian.stash.i18n.I18nService" />
+  <component key="changesetService" class="org.christiangalsterer.stash.filehooks.plugin.hook.ChangesetServiceImpl" public="false">
+    <interface>org.christiangalsterer.stash.filehooks.plugin.hook.ChangesetService</interface>
+  </component>
 
   <resource type="i18n" name="i18n" location="org.christiangalsterer.stashfile-hooks-plugin"/>
+  <web-resource key="filehooks-css">
+    <transformation extension="less">
+        <transformer key="less-transformer" />
+    </transformation>
+    <resource type="download" name="hooks.css" location="/less/hooks.less" />
+    <context>stash.page.repository.settings.hooks</context>
+  </web-resource>
   <repository-hook key="filesize-hook" name="File Size Hook" i18n-name-key="filesize-hook.name" class="org.christiangalsterer.stash.filehooks.plugin.hook.FileSizeHook">
     <description key="filesize-hook.description">Reject commits that contain files larger a configured file size limit.</description>
-    <!--<icon>icon-example.png</icon>-->
+    <icon>images/filesize.png</icon>
     <config-form name="File Size Hook Configuration" key="filesize-hook-config-form">
       <view>stash.filehooks.size.formContents</view>
+      <directory location="/static/"/>
+    </config-form>
+    <validator>org.christiangalsterer.stash.filehooks.plugin.hook.FileSizeHookValidator</validator>
+  </repository-hook>
+
+  <repository-hook key="filename-hook" name="File Name Hook" i18n-name-key="filename-hook.name" class="org.christiangalsterer.stash.filehooks.plugin.hook.FileNameHook">
+    <description key="filename-hook.description">Reject commits that contain files matching a regular expression for file and/or path name.</description>
+    <icon>images/filename.png</icon>
+    <config-form name="File Name Hook Configuration" key="filename-hook-config-form">
+      <view>stash.filehooks.name.formContents</view>
       <directory location="/static/"/>
     </config-form>
   </repository-hook>

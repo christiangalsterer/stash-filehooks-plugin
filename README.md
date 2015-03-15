@@ -2,7 +2,7 @@
 An Atlassian Stash plugin to check on various file attributes, like size, name.
 
 # Installation
-The plugin is available in the [Atlassian Marketplace](https://marketplace.atlassian.com/) and can be installed directly in Stash using the Universal Plugin Manager (UPM).
+The plugin is available in the [Atlassian Marketplace](https://marketplace.atlassian.com/plugins/org.christiangalsterer.stash-filehooks-plugin) and can be installed directly in Stash using the Universal Plugin Manager (UPM), see [here](https://marketplace.atlassian.com/plugins/org.christiangalsterer.stash-filehooks-plugin#tabs-installation) for details.
 
 # Configuration
 ## File Size Hook
@@ -11,15 +11,27 @@ The following example rejects all files larger then 1MB (1048576 bytes).
 
 ![File Size Hook Configuration](screenshots/filesize-hook-config.png)
 
+## File Name Hook
+In order to configure the hook go to your repository and select **Settings** -> **Hooks** -> **File Name Hook**.
+The following example rejects all files matching the pattern **readme.md**
+
+![File Size Hook Configuration](screenshots/filesize-name-config.png)
+
 # Releases
+
+1.1.0 (2015-03-15)
+
+* File Size Hook:
+  * Allows now to specify up to 5 different pattern and size combinations.
+  * Fixes: [Plugin crashes when pushing a branch delete #2](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/2)
+* File Name Hook: New hook which allows to check on the file name and reject pushes if files matches the specified pattern
 
 1.0.0 (2015-01-15)
 
 * Reject commits containing files which exceed a configurable file size. Files can be identified by regular expressions.
 
 # Roadmap
-* Reject commits containing files which match a regular expression.
-* Allow different file size limits for different files.
+
 
 # License
 

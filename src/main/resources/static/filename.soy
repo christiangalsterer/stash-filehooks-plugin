@@ -1,0 +1,21 @@
+{namespace stash.filehooks.name}
+
+/**
+ * @param config
+ * @param? errors
+ */
+{template .formContents}
+
+    {call aui.form.textField}
+        {param id: 'pattern' /}
+        {param value: $config['pattern'] /}
+        {param isRequired: true /}
+        {param labelContent: 'Pattern' /}
+        {param descriptionText}
+            {stash_i18n('filename-hook.pattern.description', 'Pattern for the path and file name (e.g. \'.*\' for all files)')}
+        {/param}
+        {param errorTexts: $errors ? $errors['pattern'] : null /}
+    {/call}
+{/template}
+
+

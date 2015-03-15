@@ -6,22 +6,75 @@
  */
 {template .formContents}
 
-    {call aui.form.textField}
-        {param id: 'pattern-1' /}
-        {param value: $config['pattern-1'] /}
-        {param isRequired: true /}
-        {param labelContent: 'Pattern' /}
-        {param descriptionText: 'Pattern for the path and file name (e.g. \'.*\' for all files)' /}
-        {param errorTexts: $errors ? $errors['pattern-1'] : null /}
-    {/call}
+    {let $maxCount: 5 /}
+    <div class="filesize-hooks">
 
-    {call aui.form.textField}
-        {param id: 'size-1' /}
-        {param value: $config['size-1'] /}
-        {param isRequired: true /}
-        {param labelContent: 'Size' /}
-        {param descriptionText: 'Maximum allowed file size (in bytes)' /}
-        {param errorTexts: $errors ? $errors['size-1'] : null /}
-    {/call}
+        {let $configKeys: $config ? (keys($config)) : [] /}
+        {let $configs: $configKeys and $configKeys.length > 0 ? $configKeys.length/2 : 0 /}
+        {let $visibleInputsCount: $configs > 0 ? $configs : 1 /}
+
+        {for $i in range($visibleInputsCount)}
+          {call .anotherConfig}
+              {param count: $i+1 /}
+              {param canDelete: $visibleInputsCount > 1 /}
+              {param config: $config /}
+              {param pattern: $config and $config['pattern-' + ($i+1)] ? $config['pattern-' + ($i+1)] : null /}
+              {param size: $config and $config['size-' + ($i+1)] ? $config['size-' + ($i+1)] : null /}
+              {param errors: $errors /}
+          {/call}
+        {/for}
+
+        <div class="field-group filesize-hook-add-config" >
+            <div class="{$visibleInputsCount == $maxCount ? 'filesize-hook-hidden' : '' }" id="filesize-hook-add">
+                <a class="filesize-hook-add" href="#" data-max-inputs="{$maxCount}">
+                {stash_i18n('filesize-hook.add.config.description', 'Add another configuration.')}
+                </a>
+            </div>
+        </div>
+     </div>
+
+{/template}
+
+/**
+ * @param count
+ * @param canDelete
+ * @param pattern
+ * @param size
+ * @param? errors
+ */
+{template .anotherConfig}
+    <div id="filesizehook-{$count}" class="field-group filesize-hook">
+        <div class="filesize-hook-pattern">
+        {call aui.form.textField}
+            {param id: 'pattern-' + $count /}
+            {param value: $pattern ? $pattern : '' /}
+            {param isRequired: true /}
+            {param labelContent: 'Pattern' /}
+            {param descriptionText}
+                {stash_i18n('filesize-hook.pattern.description', 'Pattern for the path and file name (e.g. \'.*\' for all files)')}
+            {/param}
+            {param errorTexts: $errors ? $errors['pattern-' + $count] : null /}
+        {/call}
+        </div>
+
+        <div class="filesize-hook-size">
+        {call aui.form.textField}
+            {param id: 'size-' + $count /}
+            {param value: $size ? $size : '' /}
+            {param isRequired: true /}
+            {param labelContent: 'Size' /}
+            {param descriptionText}
+                {stash_i18n('filesize-hook.size.description', 'Maximum allowed file size (in bytes)')}
+            {/param}
+            {param errorTexts: $errors ? $errors['size-' + $count] : null /}
+        {/call}
+        </div>
+
+        <div class="filesize-hook-delete {$canDelete ? '' : 'filesize-hook-hidden' }">
+            <a href="#" class="delete-button" title="{stash_i18n('filesize-hook.delete.button', 'Remove')}">
+                <span class="aui-icon aui-icon-small aui-iconfont-remove"></span>
+            </a>
+        </div>
+    </div>
 
 {/template}
