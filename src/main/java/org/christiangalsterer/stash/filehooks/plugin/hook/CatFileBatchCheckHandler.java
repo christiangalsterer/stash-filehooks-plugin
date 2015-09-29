@@ -1,10 +1,10 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
 import com.atlassian.fugue.Pair;
-import com.atlassian.stash.io.LineReader;
-import com.atlassian.stash.io.LineReaderOutputHandler;
-import com.atlassian.stash.scm.CommandInputHandler;
-import com.atlassian.stash.scm.CommandOutputHandler;
+import com.atlassian.bitbucket.io.LineReader;
+import com.atlassian.bitbucket.io.LineReaderOutputHandler;
+import com.atlassian.bitbucket.scm.CommandInputHandler;
+import com.atlassian.bitbucket.scm.CommandOutputHandler;
 import com.atlassian.utils.process.IOUtils;
 import com.atlassian.utils.process.ProcessException;
 import com.google.common.collect.Lists;

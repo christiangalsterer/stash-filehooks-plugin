@@ -1,8 +1,8 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.stash.content.Change;
-import com.atlassian.stash.repository.RefChange;
-import com.atlassian.stash.repository.Repository;
+import com.atlassian.bitbucket.content.Change;
+import com.atlassian.bitbucket.repository.RefChange;
+import com.atlassian.bitbucket.repository.Repository;
 
 public interface ChangesetService {
 
