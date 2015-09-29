@@ -27,7 +27,7 @@
         <div class="field-group filesize-hook-add-config" >
             <div class="{$visibleInputsCount == $maxCount ? 'filesize-hook-hidden' : '' }" id="filesize-hook-add">
                 <a class="filesize-hook-add" href="#" data-max-inputs="{$maxCount}">
-                {stash_i18n('filesize-hook.add.config.description', 'Add another configuration.')}
+                {getText('filesize-hook.add.config.description')}
                 </a>
             </div>
         </div>
@@ -51,7 +51,7 @@
             {param isRequired: true /}
             {param labelContent: 'Pattern' /}
             {param descriptionText}
-                {stash_i18n('filesize-hook.pattern.description', 'Pattern for the path and file name (e.g. \'.*\' for all files)')}
+                {getText('filesize-hook.pattern.description')}
             {/param}
             {param errorTexts: $errors ? $errors['pattern-' + $count] : null /}
         {/call}
@@ -64,14 +64,14 @@
             {param isRequired: true /}
             {param labelContent: 'Size' /}
             {param descriptionText}
-                {stash_i18n('filesize-hook.size.description', 'Maximum allowed file size (in bytes)')}
+                {getText('filesize-hook.size.description')}
             {/param}
             {param errorTexts: $errors ? $errors['size-' + $count] : null /}
         {/call}
         </div>
 
         <div class="filesize-hook-delete {$canDelete ? '' : 'filesize-hook-hidden' }">
-            <a href="#" class="delete-button" title="{stash_i18n('filesize-hook.delete.button', 'Remove')}">
+            <a href="#" class="delete-button" title="{getText('filesize-hook.delete.button')}">
                 <span class="aui-icon aui-icon-small aui-iconfont-remove"></span>
             </a>
         </div>

@@ -1,10 +1,10 @@
 # Introduction
-An Atlassian Stash plugin to check on various file attributes, like size, name.
+An Atlassian Bitbucket Server plugin to check on various file attributes, like size, name.
 
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-comfiguration.png)
 
 # Installation
-The plugin is available in the [Atlassian Marketplace](https://marketplace.atlassian.com/plugins/org.christiangalsterer.stash-filehooks-plugin) and can be installed directly in Stash using the Universal Plugin Manager (UPM), see [here](https://marketplace.atlassian.com/plugins/org.christiangalsterer.stash-filehooks-plugin#tabs-installation) for details.
+The plugin is available in the [Atlassian Marketplace](https://marketplace.atlassian.com/plugins/org.christiangalsterer.stash-filehooks-plugin) and can be installed directly in Bitbucket Server using the Universal Plugin Manager (UPM), see [here](https://marketplace.atlassian.com/plugins/org.christiangalsterer.stash-filehooks-plugin#tabs-installation) for details.
 
 # Configuration
 ## File Size Hook
@@ -20,6 +20,10 @@ The following example rejects all files matching the pattern **readme.md**
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-filename-hook-configuration.png)
 
 # Releases
+
+2.0.0 (2015-09-29)
+
+* Compatibility with Bitbucket Server 4.0.x
 
 1.1.0 (2015-03-15)
 

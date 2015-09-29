@@ -12,7 +12,7 @@
         {param isRequired: true /}
         {param labelContent: 'Pattern' /}
         {param descriptionText}
-            {stash_i18n('filename-hook.pattern.description', 'Pattern for the path and file name (e.g. \'.*\' for all files)')}
+            {getText('filename-hook.pattern.description')}
         {/param}
         {param errorTexts: $errors ? $errors['pattern'] : null /}
     {/call}

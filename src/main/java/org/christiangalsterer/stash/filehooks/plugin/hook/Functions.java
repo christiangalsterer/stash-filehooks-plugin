@@ -1,26 +1,25 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.stash.content.Change;
-import com.atlassian.stash.content.Changeset;
-import com.atlassian.stash.content.DetailedChangeset;
-import com.atlassian.stash.repository.RefChange;
-import com.atlassian.stash.repository.RefChangeType;
+import com.atlassian.bitbucket.content.Change;
+import com.atlassian.bitbucket.commit.Commit;
+import com.atlassian.bitbucket.commit.Changeset;
+import com.atlassian.bitbucket.repository.RefChange;
+import com.atlassian.bitbucket.repository.RefChangeType;
 import com.google.common.base.Function;
-import org.apache.xpath.operations.Bool;
 
 public class Functions {
 
-    public static final Function<Changeset, String> CHANGESET_TO_ID = new Function<Changeset, String>() {
+    public static final Function<Commit, String> CHANGESET_TO_ID = new Function<Commit, String>() {
         @Override
-        public String apply(Changeset input) {
+        public String apply(Commit input) {
             return input.getId();
         }
     };
 
-    public static final Function<DetailedChangeset, Iterable<Change>> DETAILED_CHANGESET_TO_CHANGES = new Function<DetailedChangeset, Iterable<Change>>() {
+    public static final Function<Changeset, Iterable<Change>> DETAILED_CHANGESET_TO_CHANGES = new Function<Changeset, Iterable<Change>>() {
         @SuppressWarnings({ "ConstantConditions", "unchecked" })
         @Override
-        public Iterable<Change> apply(DetailedChangeset input) {
+        public Iterable<Change> apply(Changeset input) {
             return (Iterable<Change>) input.getChanges().getValues();
         }
     };

@@ -1,7 +1,7 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.stash.repository.Repository;
-import com.atlassian.stash.setting.Settings;
+import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.setting.Settings;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
