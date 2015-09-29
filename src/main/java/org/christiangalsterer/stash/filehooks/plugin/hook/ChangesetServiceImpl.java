@@ -1,10 +1,10 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.stash.commit.CommitService;
-import com.atlassian.stash.content.*;
-import com.atlassian.stash.repository.RefChange;
-import com.atlassian.stash.repository.Repository;
-import com.atlassian.stash.util.*;
+import com.atlassian.bitbucket.commit.*;
+import com.atlassian.bitbucket.content.Change;
+import com.atlassian.bitbucket.repository.RefChange;
+import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.util.*;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -30,17 +30,17 @@ public class ChangesetServiceImpl implements ChangesetService {
             @Override
             public Iterable<Change> apply(RefChange refChange) {
                 // TODO Ideally this is one diff-tree git call
-                Iterable<String> csetss = transform(getChangesetsBetween(repository, refChange), Functions.CHANGESET_TO_ID);
+                Iterable<String> csetss = transform(getCommitsBetween(repository, refChange), Functions.CHANGESET_TO_ID);
                 return Iterables.concat(Iterables.transform(getDetailedChangesets(repository, csetss), Functions.DETAILED_CHANGESET_TO_CHANGES));
             }
         });
     }
 
-    private Iterable<Changeset> getChangesetsBetween(final Repository repository, final RefChange refChange) {
-        return new PagedIterable<Changeset>(new PageProvider<Changeset>() {
+    private Iterable<Commit> getCommitsBetween(final Repository repository, final RefChange refChange) {
+        return new PagedIterable<Commit>(new PageProvider<Commit>() {
             @Override
-            public Page<Changeset> get(PageRequest pageRequest) {
-                return commitService.getChangesetsBetween(new ChangesetsBetweenRequest.Builder(repository)
+            public Page<Commit> get(PageRequest pageRequest) {
+                return commitService.getCommitsBetween(new CommitsBetweenRequest.Builder(repository)
                         .exclude(refChange.getFromHash())
                         .include(refChange.getToHash())
                         .build(), pageRequest);
@@ -48,13 +48,13 @@ public class ChangesetServiceImpl implements ChangesetService {
         }, PAGE_REQUEST);
     }
 
-    private Iterable<DetailedChangeset> getDetailedChangesets(final Repository repository, Iterable<String> changesets) {
+    private Iterable<Changeset> getDetailedChangesets(final Repository repository, Iterable<String> changesets) {
         final Collection<String> csets = ImmutableSet.copyOf(changesets);
-        return new PagedIterable<DetailedChangeset>(new PageProvider<DetailedChangeset>() {
+        return new PagedIterable<Changeset>(new PageProvider<Changeset>() {
             @Override
-            public Page<DetailedChangeset> get(PageRequest pageRequest) {
-                return commitService.getDetailedChangesets(new DetailedChangesetsRequest.Builder(repository)
-                        .changesetIds(csets)
+            public Page<Changeset> get(PageRequest pageRequest) {
+                return commitService.getChangesets(new ChangesetsRequest.Builder(repository)
+                        .commitIds(csets)
                         .maxChangesPerCommit(MAX_CHANGES)
                         .build(), pageRequest);
             }

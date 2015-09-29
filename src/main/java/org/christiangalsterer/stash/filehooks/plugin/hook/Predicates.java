@@ -1,7 +1,7 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.stash.repository.RefChange;
-import com.atlassian.stash.repository.RefChangeType;
+import com.atlassian.bitbucket.repository.RefChange;
+import com.atlassian.bitbucket.repository.RefChangeType;
 import com.google.common.base.Predicate;
 
 public class Predicates {

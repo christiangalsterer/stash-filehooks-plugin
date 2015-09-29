@@ -1,16 +1,16 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
 import com.atlassian.fugue.Pair;
-import com.atlassian.stash.content.*;
-import com.atlassian.stash.hook.HookResponse;
-import com.atlassian.stash.hook.repository.PreReceiveRepositoryHook;
-import com.atlassian.stash.hook.repository.RepositoryHookContext;
-import com.atlassian.stash.repository.RefChange;
-import com.atlassian.stash.repository.Repository;
-import com.atlassian.stash.scm.Command;
-import com.atlassian.stash.scm.PluginCommandBuilderFactory;
-import com.atlassian.stash.scm.git.GitCommandBuilderFactory;
-import com.atlassian.stash.setting.Settings;
+import com.atlassian.bitbucket.content.*;
+import com.atlassian.bitbucket.hook.HookResponse;
+import com.atlassian.bitbucket.hook.repository.PreReceiveRepositoryHook;
+import com.atlassian.bitbucket.hook.repository.RepositoryHookContext;
+import com.atlassian.bitbucket.repository.RefChange;
+import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.scm.Command;
+import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
+import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
+import com.atlassian.bitbucket.setting.Settings;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
@@ -55,7 +55,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
 
             addAll(paths, filter((Multimaps.index(
                     filter(getChanges(repository, filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteChange)),
-                            Predicates.compose(Ranges.greaterThan(maxFileSize), Pair.<Long>rightValue())),
+                            Predicates.compose(Range.greaterThan(maxFileSize), Pair.<Long>rightValue())),
                     compose(Functions.CHANGE_TO_PATH, Pair.<Change>leftValue())).keySet()), Predicates.contains(pattern)));
             pathAndSizes.put(maxFileSize, paths);
         }

@@ -1,10 +1,10 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.stash.i18n.I18nService;
-import com.atlassian.stash.repository.Repository;
-import com.atlassian.stash.setting.RepositorySettingsValidator;
-import com.atlassian.stash.setting.Settings;
-import com.atlassian.stash.setting.SettingsValidationErrors;
+import com.atlassian.bitbucket.i18n.I18nService;
+import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
+import com.atlassian.bitbucket.setting.Settings;
+import com.atlassian.bitbucket.setting.SettingsValidationErrors;
 
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -41,16 +41,16 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
            try {
                 int size = Integer.parseInt(settings.getString(SETTINGS_SIZE_PREFIX + i, ""));
                 if (size < 1) {
-                    errors.addFieldError("size-" + i, i18n.getText("filesize-hooks.error.size", "Size must be an integer value larger than 0"));
+                    errors.addFieldError("size-" + i, i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
                 }
             } catch (NumberFormatException e) {
-                errors.addFieldError("size-" + i, i18n.getText("filesize-hooks.error.size", "Size must be an integer value larger than 0"));
+                errors.addFieldError("size-" + i, i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
             }
 
             try {
                 Pattern.compile(settings.getString(SETTINGS_PATTERN_PREFIX + i, ""));
             } catch (PatternSyntaxException e) {
-                errors.addFieldError("pattern-" + i, i18n.getText("filesize-hooks.error.pattern", "Pattern is not a valid regular expression"));
+                errors.addFieldError("pattern-" + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
             }
         }
     }
