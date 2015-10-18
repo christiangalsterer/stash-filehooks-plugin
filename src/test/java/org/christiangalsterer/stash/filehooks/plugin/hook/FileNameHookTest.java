@@ -1,5 +1,6 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
+import com.atlassian.bitbucket.i18n.I18nService;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.Settings;
 import org.junit.Before;
@@ -17,6 +18,9 @@ public class FileNameHookTest {
     private ChangesetService changesetService;
 
     @Mock
+    private I18nService i18n;
+
+    @Mock
     private Repository repository;
 
     @Mock
@@ -27,7 +31,7 @@ public class FileNameHookTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        fileNameHook = new FileNameHook(changesetService);
+        fileNameHook = new FileNameHook(changesetService, i18n);
     }
 
     @Test

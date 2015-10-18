@@ -10,12 +10,23 @@
         {param id: 'pattern' /}
         {param value: $config['pattern'] /}
         {param isRequired: true /}
-        {param labelContent: 'Pattern' /}
+        {param labelContent: 'Include Pattern' /}
         {param descriptionText}
-            {getText('filename-hook.pattern.description')}
+            {getText('filename-hook.includePattern.description')}
         {/param}
         {param errorTexts: $errors ? $errors['pattern'] : null /}
     {/call}
+
+    {call aui.form.textField}
+            {param id: 'pattern-exclude' /}
+            {param value: $config['pattern-exclude'] /}
+            {param isRequired: false /}
+            {param labelContent: 'Exclude Pattern' /}
+            {param descriptionText}
+                {getText('filename-hook.excludePattern.description')}
+            {/param}
+            {param errorTexts: $errors ? $errors['pattern-exclude'] : null /}
+        {/call}
 {/template}
 
 

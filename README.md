@@ -21,6 +21,10 @@ The following example rejects all files matching the pattern **readme.md**
 
 # Releases
 
+2.1.0 (2015-10-XX)
+
+* Allows to specify exclude patterns for the File Size Hook and File Name Hook.
+
 2.0.0 (2015-09-29)
 
 * Compatibility with Bitbucket Server 4.0.x

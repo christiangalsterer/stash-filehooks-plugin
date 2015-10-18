@@ -9,14 +9,14 @@ import com.google.common.base.Function;
 
 public class Functions {
 
-    public static final Function<Commit, String> CHANGESET_TO_ID = new Function<Commit, String>() {
+    public static final Function<Commit, String> COMMIT_TO_ID = new Function<Commit, String>() {
         @Override
         public String apply(Commit input) {
             return input.getId();
         }
     };
 
-    public static final Function<Changeset, Iterable<Change>> DETAILED_CHANGESET_TO_CHANGES = new Function<Changeset, Iterable<Change>>() {
+    public static final Function<Changeset, Iterable<Change>> CHANGESET_TO_CHANGES = new Function<Changeset, Iterable<Change>>() {
         @SuppressWarnings({ "ConstantConditions", "unchecked" })
         @Override
         public Iterable<Change> apply(Changeset input) {

@@ -10,7 +10,7 @@
     <div class="filesize-hooks">
 
         {let $configKeys: $config ? (keys($config)) : [] /}
-        {let $configs: $configKeys and $configKeys.length > 0 ? $configKeys.length/2 : 0 /}
+        {let $configs: $configKeys and $configKeys.length > 0 ? $configKeys.length/3 : 0 /}
         {let $visibleInputsCount: $configs > 0 ? $configs : 1 /}
 
         {for $i in range($visibleInputsCount)}
@@ -18,8 +18,9 @@
               {param count: $i+1 /}
               {param canDelete: $visibleInputsCount > 1 /}
               {param config: $config /}
-              {param pattern: $config and $config['pattern-' + ($i+1)] ? $config['pattern-' + ($i+1)] : null /}
+              {param includePattern: $config and $config['pattern-' + ($i+1)] ? $config['pattern-' + ($i+1)] : null /}
               {param size: $config and $config['size-' + ($i+1)] ? $config['size-' + ($i+1)] : null /}
+              {param excludePattern: $config and $config['pattern-exclude-' + ($i+1)] ? $config['pattern-exclude-' + ($i+1)] : null /}
               {param errors: $errors /}
           {/call}
         {/for}
@@ -38,20 +39,21 @@
 /**
  * @param count
  * @param canDelete
- * @param pattern
+ * @param includePattern
  * @param size
+ * @param excludePattern
  * @param? errors
  */
 {template .anotherConfig}
     <div id="filesizehook-{$count}" class="field-group filesize-hook">
-        <div class="filesize-hook-pattern">
+        <div class="filesize-hook-include-pattern">
         {call aui.form.textField}
             {param id: 'pattern-' + $count /}
-            {param value: $pattern ? $pattern : '' /}
+            {param value: $includePattern ? $includePattern : '' /}
             {param isRequired: true /}
-            {param labelContent: 'Pattern' /}
+            {param labelContent: 'Include Pattern' /}
             {param descriptionText}
-                {getText('filesize-hook.pattern.description')}
+                {getText('filesize-hook.includePattern.description')}
             {/param}
             {param errorTexts: $errors ? $errors['pattern-' + $count] : null /}
         {/call}
@@ -67,6 +69,19 @@
                 {getText('filesize-hook.size.description')}
             {/param}
             {param errorTexts: $errors ? $errors['size-' + $count] : null /}
+        {/call}
+        </div>
+
+        <div class="filesize-hook-exclude-pattern">
+        {call aui.form.textField}
+            {param id: 'pattern-exclude-' + $count /}
+            {param value: $excludePattern ? $excludePattern : '' /}
+            {param isRequired: false /}
+            {param labelContent: 'Exclude Pattern' /}
+            {param descriptionText}
+                {getText('filesize-hook.excludePattern.description')}
+            {/param}
+            {param errorTexts: $errors ? $errors['pattern-exclude-' + $count] : null /}
         {/call}
         </div>
 
