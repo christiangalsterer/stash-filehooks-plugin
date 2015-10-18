@@ -1,10 +1,12 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
+import antlr.StringUtils;
 import com.atlassian.bitbucket.i18n.I18nService;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.setting.SettingsValidationErrors;
+import com.google.common.base.Strings;
 
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -13,7 +15,8 @@ import java.util.regex.PatternSyntaxException;
 public class FileSizeHookValidator implements RepositorySettingsValidator {
 
     private static final int MAX_SETTINGS = 5;
-    private static final String SETTINGS_PATTERN_PREFIX = "pattern-";
+    private static final String SETTINGS_INCLUDE_PATTERN_PREFIX = "pattern-";
+    private static final String SETTINGS_EXCLUDE_PATTERN_PREFIX = "pattern-exclude-";
     private static final String SETTINGS_SIZE_PREFIX = "size-";
     private final I18nService i18n;
 
@@ -28,7 +31,7 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
 
         final Set<String> params = settings.asMap().keySet();
         for (String param : params) {
-            if (param.startsWith(SETTINGS_PATTERN_PREFIX)) {
+            if (param.startsWith(SETTINGS_INCLUDE_PATTERN_PREFIX) && !param.startsWith(SETTINGS_EXCLUDE_PATTERN_PREFIX)) {
                 patternParams++;
                 continue;
             }
@@ -44,13 +47,25 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
                     errors.addFieldError("size-" + i, i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
                 }
             } catch (NumberFormatException e) {
-                errors.addFieldError("size-" + i, i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
+                errors.addFieldError(SETTINGS_SIZE_PREFIX + i, i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
             }
 
-            try {
-                Pattern.compile(settings.getString(SETTINGS_PATTERN_PREFIX + i, ""));
-            } catch (PatternSyntaxException e) {
-                errors.addFieldError("pattern-" + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+            if (Strings.isNullOrEmpty(settings.getString(SETTINGS_INCLUDE_PATTERN_PREFIX + i))) {
+                errors.addFieldError(SETTINGS_INCLUDE_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+            } else {
+                try {
+                    Pattern.compile(settings.getString(SETTINGS_INCLUDE_PATTERN_PREFIX + i, ""));
+                } catch (PatternSyntaxException e) {
+                    errors.addFieldError(SETTINGS_INCLUDE_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+                }
+            }
+
+            if (!Strings.isNullOrEmpty(settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i))){
+                try {
+                    Pattern.compile(settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i));
+                } catch (PatternSyntaxException e) {
+                    errors.addFieldError(SETTINGS_EXCLUDE_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+                }
             }
         }
     }

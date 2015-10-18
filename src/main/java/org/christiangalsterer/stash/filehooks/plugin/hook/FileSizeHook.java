@@ -30,7 +30,8 @@ import static com.google.common.collect.Iterables.transform;
 public class FileSizeHook implements PreReceiveRepositoryHook {
 
     private static final int MAX_SETTINGS = 5;
-    private static final String SETTINGS_PATTERN_PREFIX = "pattern-";
+    private static final String SETTINGS_INCLUDE_PATTERN_PREFIX = "pattern-";
+    private static final String SETTINGS_EXCLUDE_PATTERN_PREFIX = "pattern-exclude-";
     private static final String SETTINGS_SIZE_PREFIX = "size-";
 
     private final ChangesetService changesetService;
@@ -44,21 +45,26 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
     @Override
     public boolean onReceive(@Nonnull RepositoryHookContext context, @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
         Repository repository = context.getRepository();
-        SortedMap<String, Long> regexAndSizes = getSettings(context.getSettings());
+        List<FileSizeHookSetting> settings = getSettings(context.getSettings());
 
         Map<Long, Collection<String>> pathAndSizes = new HashMap<Long, Collection<String>>();
 
-        for (String regex : regexAndSizes.keySet()) {
+        for (FileSizeHookSetting setting : settings) {
             Collection<String> paths = new ArrayList<String>();
-            Pattern pattern = Pattern.compile(regex);
-            Long maxFileSize = regexAndSizes.get(regex);
+            Pattern includePattern = setting.getIncludePattern();
+            Long maxFileSize = setting.getSize();
 
-            addAll(paths, filter((Multimaps.index(
+            Iterable<String> filteredPaths = filter((Multimaps.index(
                     filter(getChanges(repository, filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteChange)),
                             Predicates.compose(Range.greaterThan(maxFileSize), Pair.<Long>rightValue())),
-                    compose(Functions.CHANGE_TO_PATH, Pair.<Change>leftValue())).keySet()), Predicates.contains(pattern)));
+                    compose(Functions.CHANGE_TO_PATH, Pair.<Change>leftValue())).keySet()), Predicates.contains(includePattern));
+
+            if (setting.getExcludePattern().isPresent())
+                filteredPaths = filter(filteredPaths, Predicates.not(Predicates.contains(setting.getExcludePattern().get())));
+
+            addAll(paths, filteredPaths);
             pathAndSizes.put(maxFileSize, paths);
-        }
+         }
 
         boolean hookPassed = true;
 
@@ -77,20 +83,22 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
         return hookPassed;
     }
 
-    private SortedMap<String, Long> getSettings(Settings settings) {
-        String regex;
+    private List<FileSizeHookSetting> getSettings(Settings settings) {
+        List<FileSizeHookSetting> configurations = new ArrayList<FileSizeHookSetting>();
+        String includeRegex;
         Long size;
-        Map<String, Long> regexAndSizes = new HashMap<String, Long>();
+        String excludeRegex;
 
         for (int i = 1; i <= MAX_SETTINGS ; i++) {
-            regex = settings.getString(SETTINGS_PATTERN_PREFIX + i);
-            if (regex != null) {
+            includeRegex = settings.getString(SETTINGS_INCLUDE_PATTERN_PREFIX + i);
+            if (includeRegex != null) {
+                excludeRegex = settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i);
                 size = settings.getLong(SETTINGS_SIZE_PREFIX + i);
-                regexAndSizes.put(regex, size);
+                configurations.add(new FileSizeHookSetting(size, includeRegex, excludeRegex));
             }
         }
 
-        return ImmutableSortedMap.copyOf(regexAndSizes);
+        return configurations;
     }
 
     private Iterable<Pair<Change, Long>> getChanges(Repository repository, Iterable<RefChange> refChanges) {

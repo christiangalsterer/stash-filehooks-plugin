@@ -16,7 +16,7 @@ import static com.google.common.collect.Iterables.transform;
 public class ChangesetServiceImpl implements ChangesetService {
 
     private static final PageRequestImpl PAGE_REQUEST = new PageRequestImpl(0, 100);
-    private static final int MAX_CHANGES = 100;
+    private static final int MAX_CHANGES_PER_COMMIT = 100;
 
     private final CommitService commitService;
 
@@ -30,8 +30,8 @@ public class ChangesetServiceImpl implements ChangesetService {
             @Override
             public Iterable<Change> apply(RefChange refChange) {
                 // TODO Ideally this is one diff-tree git call
-                Iterable<String> csetss = transform(getCommitsBetween(repository, refChange), Functions.CHANGESET_TO_ID);
-                return Iterables.concat(Iterables.transform(getDetailedChangesets(repository, csetss), Functions.DETAILED_CHANGESET_TO_CHANGES));
+                Iterable<String> csetss = transform(getCommitsBetween(repository, refChange), Functions.COMMIT_TO_ID);
+                return Iterables.concat(Iterables.transform(getChangesets(repository, csetss), Functions.CHANGESET_TO_CHANGES));
             }
         });
     }
@@ -48,14 +48,14 @@ public class ChangesetServiceImpl implements ChangesetService {
         }, PAGE_REQUEST);
     }
 
-    private Iterable<Changeset> getDetailedChangesets(final Repository repository, Iterable<String> changesets) {
+    private Iterable<Changeset> getChangesets(final Repository repository, Iterable<String> changesets) {
         final Collection<String> csets = ImmutableSet.copyOf(changesets);
         return new PagedIterable<Changeset>(new PageProvider<Changeset>() {
             @Override
             public Page<Changeset> get(PageRequest pageRequest) {
                 return commitService.getChangesets(new ChangesetsRequest.Builder(repository)
                         .commitIds(csets)
-                        .maxChangesPerCommit(MAX_CHANGES)
+                        .maxChangesPerCommit(MAX_CHANGES_PER_COMMIT)
                         .build(), pageRequest);
             }
         }, PAGE_REQUEST);
