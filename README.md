@@ -21,7 +21,7 @@ The following example rejects all files matching the pattern **readme.md**
 
 # Releases
 
-2.1.0 (2015-10-XX)
+2.1.0 (2015-10-18)
 
 * Allows to specify exclude patterns for the File Size Hook and File Name Hook.
 
