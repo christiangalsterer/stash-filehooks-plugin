@@ -17,7 +17,6 @@ import com.google.common.collect.*;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -47,7 +46,7 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
         FileNameHookSetting setting = getSettings(context.getSettings());
 
         Collection<String> paths = new ArrayList<String>();
-        Iterable<String> filteredPaths = filter(transform(getChanges(repository, filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteChange)), Functions.CHANGE_TO_PATH), Predicates.contains(setting.getIncludePattern()));
+        Iterable<String> filteredPaths = filter(transform(getChanges(repository, filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteRefChange)), Functions.CHANGE_TO_PATH), Predicates.contains(setting.getIncludePattern()));
 
         if (setting.getExcludePattern().isPresent())
             filteredPaths = filter(filteredPaths, Predicates.not(Predicates.contains(setting.getExcludePattern().get())));
@@ -66,7 +65,8 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
     }
 
     private Iterable<Change> getChanges(Repository repository, Iterable<RefChange> refChanges) {
-        return Iterables.concat(changesetService.getChanges(refChanges, repository));
+        return filter(Iterables.concat(changesetService.getChanges(refChanges, repository)), org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteChange);
+
     }
 
     private FileNameHookSetting getSettings(Settings settings) {

@@ -21,6 +21,17 @@ The following example rejects all files matching the pattern **readme.md**
 
 # Releases
 
+2.1.2 (2016-01-22)
+
+* File Size Hook:
+  * Fixes: [Deleted files were not excluded from check](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/11)
+* File Name Hook:
+  * Fixes: [Deleted files were not excluded from check](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/11)
+
+2.1.1 (2015-10-18)
+
+* Allows to specify exclude patterns for the File Size Hook and File Name Hook.
+
 2.1.0 (2015-10-18)
 
 * Allows to specify exclude patterns for the File Size Hook and File Name Hook.
