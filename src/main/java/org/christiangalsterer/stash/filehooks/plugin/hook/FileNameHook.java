@@ -46,7 +46,7 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
         FileNameHookSetting setting = getSettings(context.getSettings());
 
         Collection<String> paths = new ArrayList<String>();
-        Iterable<String> filteredPaths = filter(transform(getChanges(repository, filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteRefChange)), Functions.CHANGE_TO_PATH), Predicates.contains(setting.getIncludePattern()));
+        Iterable<String> filteredPaths = filter(transform(getChanges(repository, filter(filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteRefChange), org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotTagRefChange)), Functions.CHANGE_TO_PATH), Predicates.contains(setting.getIncludePattern()));
 
         if (setting.getExcludePattern().isPresent())
             filteredPaths = filter(filteredPaths, Predicates.not(Predicates.contains(setting.getExcludePattern().get())));

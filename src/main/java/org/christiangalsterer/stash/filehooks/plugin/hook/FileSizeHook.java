@@ -55,9 +55,9 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             Long maxFileSize = setting.getSize();
 
             Iterable<String> filteredPaths = filter((Multimaps.index(
-                    filter(getChanges(repository, filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteRefChange)),
+                    filter(getChanges(repository, filter(filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteRefChange), org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotTagRefChange)),
                             Predicates.compose(Range.greaterThan(maxFileSize), Pair.<Long>rightValue())),
-                    compose(Functions.CHANGE_TO_PATH, Pair.<Change>leftValue())).keySet()), Predicates.contains(includePattern));
+                            compose(Functions.CHANGE_TO_PATH, Pair.<Change>leftValue())).keySet()), Predicates.contains(includePattern));
 
             if (setting.getExcludePattern().isPresent())
                 filteredPaths = filter(filteredPaths, Predicates.not(Predicates.contains(setting.getExcludePattern().get())));
