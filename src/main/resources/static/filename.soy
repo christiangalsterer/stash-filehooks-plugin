@@ -18,15 +18,26 @@
     {/call}
 
     {call aui.form.textField}
-            {param id: 'pattern-exclude' /}
-            {param value: $config['pattern-exclude'] /}
-            {param isRequired: false /}
-            {param labelContent: 'Exclude Pattern' /}
-            {param descriptionText}
-                {getText('filename-hook.excludePattern.description')}
-            {/param}
-            {param errorTexts: $errors ? $errors['pattern-exclude'] : null /}
-        {/call}
+        {param id: 'pattern-exclude' /}
+        {param value: $config['pattern-exclude'] /}
+        {param isRequired: false /}
+        {param labelContent: 'Exclude Pattern' /}
+        {param descriptionText}
+            {getText('filename-hook.excludePattern.description')}
+        {/param}
+        {param errorTexts: $errors ? $errors['pattern-exclude'] : null /}
+    {/call}
+
+    {call aui.form.textField}
+        {param id: 'affected-branches' /}
+        {param value: $config['affected-branches'] /}
+        {param isRequired: false /}
+        {param labelContent: 'Affected branches' /}
+        {param descriptionText}
+            {getText('filename-hook.affectedBranches.description')}
+        {/param}
+        {param errorTexts: $errors ? $errors['affected-branches'] : null /}
+    {/call}
 {/template}
 
 

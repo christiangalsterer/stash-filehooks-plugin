@@ -9,10 +9,13 @@ public class FileNameHookSetting {
 
     private Pattern includePattern;
     private Optional<Pattern> excludePattern;
+    private Optional<Pattern> affectedBranches;
 
-    public FileNameHookSetting(String includePattern, String excludePattern) {
+    public FileNameHookSetting(String includePattern, String excludePattern, String affectedBranches) {
         this.includePattern = Pattern.compile(includePattern);
         this.excludePattern = Strings.isNullOrEmpty(excludePattern) ? Optional.empty() : Optional.of(Pattern.compile(excludePattern));
+        this.affectedBranches = Strings.isNullOrEmpty(affectedBranches) ?
+                Optional.empty() : Optional.of(Pattern.compile(affectedBranches));
     }
 
     public Pattern getIncludePattern() {
@@ -22,4 +25,6 @@ public class FileNameHookSetting {
     public Optional<Pattern> getExcludePattern() {
         return excludePattern;
     }
+
+    public Optional<Pattern> getAffectedBranches() { return affectedBranches; }
 }

@@ -4,7 +4,11 @@ import com.atlassian.bitbucket.content.Change;
 import com.atlassian.bitbucket.content.ChangeType;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
+import com.atlassian.bitbucket.scm.git.GitRefPattern;
 import com.google.common.base.Predicate;
+
+import javax.annotation.Nullable;
+import java.util.regex.Pattern;
 
 public class Predicates {
 
@@ -42,4 +46,18 @@ public class Predicates {
             return !change.getType().equals(ChangeType.DELETE);
         }
     };
+
+    /**
+     * Predicate to check if the RefChange is in the @param affectedBranches
+     */
+    public static final Predicate<RefChange> filterBranchesPredicate(final Pattern affectedBranches) {
+        return new Predicate<RefChange>() {
+            @Override
+            public boolean apply(@Nullable RefChange refChange) {
+                String branchName = refChange.getRef().getId();
+                String unqualifiedBranchName = GitRefPattern.HEADS.unqualify(branchName);
+                return affectedBranches.matcher(unqualifiedBranchName).matches();
+            }
+        };
+    }
 }
