@@ -21,6 +21,14 @@ The following example rejects all files matching the pattern **readme.md**
 
 # Releases
 
+2.3.0 (2016-03-15)
+
+* Allows to specify branch name patterns for the File Size Hook and File Name Hook.
+
+2.2.0 (2016-01-23)
+
+* Tag commits are now excluded
+
 2.1.2 (2016-01-22)
 
 * File Size Hook:

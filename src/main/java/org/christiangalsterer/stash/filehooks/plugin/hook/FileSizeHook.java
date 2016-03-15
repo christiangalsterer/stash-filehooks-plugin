@@ -23,6 +23,7 @@ import static com.google.common.base.Functions.compose;
 import static com.google.common.collect.Iterables.addAll;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
+import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.*;
 
 /**
  * Checks the size of a file in the pre-receive phase and rejects the push when the changeset contains files which exceed the configured file size limit.
@@ -33,6 +34,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
     private static final String SETTINGS_INCLUDE_PATTERN_PREFIX = "pattern-";
     private static final String SETTINGS_EXCLUDE_PATTERN_PREFIX = "pattern-exclude-";
     private static final String SETTINGS_SIZE_PREFIX = "size-";
+    private static final String SETTINGS_BRANCHES_PATTERN_PREFIX = "pattern-branches-";
 
     private final ChangesetService changesetService;
     private final PluginCommandBuilderFactory commandFactory;
@@ -46,6 +48,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
     public boolean onReceive(@Nonnull RepositoryHookContext context, @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
         Repository repository = context.getRepository();
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
+        Optional<Pattern> branchesPattern = Optional.empty();
 
         Map<Long, Collection<String>> pathAndSizes = new HashMap<Long, Collection<String>>();
 
@@ -53,9 +56,19 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             Collection<String> paths = new ArrayList<String>();
             Pattern includePattern = setting.getIncludePattern();
             Long maxFileSize = setting.getSize();
+            branchesPattern = setting.getBranchesPattern();
+
+            Collection<RefChange> filteredRefChanges = FluentIterable.from(refChanges)
+                    .filter(isNotDeleteRefChange)
+                    .filter(isNotTagRefChange)
+                    .toList();
+
+            if(branchesPattern.isPresent()) {
+                filteredRefChanges = Collections2.filter(filteredRefChanges, filterBranchesPredicate(branchesPattern.get()));
+            }
 
             Iterable<String> filteredPaths = filter((Multimaps.index(
-                    filter(getChanges(repository, filter(filter(refChanges, org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteRefChange), org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotTagRefChange)),
+                    filter(getChanges(repository, filteredRefChanges),
                             Predicates.compose(Range.greaterThan(maxFileSize), Pair.<Long>rightValue())),
                             compose(Functions.CHANGE_TO_PATH, Pair.<Change>leftValue())).keySet()), Predicates.contains(includePattern));
 
@@ -74,7 +87,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                 hookPassed = false;
                 hookResponse.out().println("=================================");
                 for (String path : paths) {
-                    hookResponse.out().println(String.format("File [%s] is too large. Maximum allowed file size is %s bytes", path, maxFileSize));
+                    hookResponse.out().println(String.format("File [%s] is too large. Maximum allowed file size is %s bytes.", path, maxFileSize));
                 }
                 hookResponse.out().println("=================================");
             }
@@ -88,13 +101,15 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
         String includeRegex;
         Long size;
         String excludeRegex;
+        String branchesRegex;
 
         for (int i = 1; i <= MAX_SETTINGS ; i++) {
             includeRegex = settings.getString(SETTINGS_INCLUDE_PATTERN_PREFIX + i);
             if (includeRegex != null) {
                 excludeRegex = settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i);
                 size = settings.getLong(SETTINGS_SIZE_PREFIX + i);
-                configurations.add(new FileSizeHookSetting(size, includeRegex, excludeRegex));
+                branchesRegex = settings.getString(SETTINGS_BRANCHES_PATTERN_PREFIX + i);
+                configurations.add(new FileSizeHookSetting(size, includeRegex, excludeRegex, branchesRegex));
             }
         }
 
@@ -102,7 +117,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
     }
 
     private Iterable<Pair<Change, Long>> getChanges(Repository repository, Iterable<RefChange> refChanges) {
-        return zipWithSize(filter(Iterables.concat(changesetService.getChanges(refChanges, repository)), org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteChange), repository);
+        return zipWithSize(filter(Iterables.concat(changesetService.getChanges(refChanges, repository)), isNotDeleteChange), repository);
     }
 
     private Iterable<Pair<Change, Long>> zipWithSize(Iterable<Change> changes, Repository repository) {

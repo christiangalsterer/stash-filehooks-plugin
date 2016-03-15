@@ -10,7 +10,7 @@
         {param id: 'pattern' /}
         {param value: $config['pattern'] /}
         {param isRequired: true /}
-        {param labelContent: 'Include Pattern' /}
+        {param labelContent: 'Include' /}
         {param descriptionText}
             {getText('filename-hook.includePattern.description')}
         {/param}
@@ -21,7 +21,7 @@
         {param id: 'pattern-exclude' /}
         {param value: $config['pattern-exclude'] /}
         {param isRequired: false /}
-        {param labelContent: 'Exclude Pattern' /}
+        {param labelContent: 'Exclude' /}
         {param descriptionText}
             {getText('filename-hook.excludePattern.description')}
         {/param}
@@ -29,14 +29,14 @@
     {/call}
 
     {call aui.form.textField}
-        {param id: 'affected-branches' /}
-        {param value: $config['affected-branches'] /}
+        {param id: 'pattern-branches' /}
+        {param value: $config['pattern-branches'] /}
         {param isRequired: false /}
-        {param labelContent: 'Affected branches' /}
+        {param labelContent: 'Branches' /}
         {param descriptionText}
-            {getText('filename-hook.affectedBranches.description')}
+            {getText('filename-hook.branchesPattern.description')}
         {/param}
-        {param errorTexts: $errors ? $errors['affected-branches'] : null /}
+        {param errorTexts: $errors ? $errors['pattern-branches'] : null /}
     {/call}
 {/template}
 

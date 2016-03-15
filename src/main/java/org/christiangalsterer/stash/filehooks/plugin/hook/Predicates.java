@@ -48,15 +48,15 @@ public class Predicates {
     };
 
     /**
-     * Predicate to check if the RefChange is in the @param affectedBranches
+     * Predicate to check if the RefChange is matched by the @param branchesPattern
      */
-    public static final Predicate<RefChange> filterBranchesPredicate(final Pattern affectedBranches) {
+    public static final Predicate<RefChange> filterBranchesPredicate(final Pattern branchesPattern) {
         return new Predicate<RefChange>() {
             @Override
             public boolean apply(@Nullable RefChange refChange) {
                 String branchName = refChange.getRef().getId();
                 String unqualifiedBranchName = GitRefPattern.HEADS.unqualify(branchName);
-                return affectedBranches.matcher(unqualifiedBranchName).matches();
+                return branchesPattern.matcher(unqualifiedBranchName).matches();
             }
         };
     }

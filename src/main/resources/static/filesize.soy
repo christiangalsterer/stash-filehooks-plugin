@@ -10,7 +10,7 @@
     <div class="filesize-hooks">
 
         {let $configKeys: $config ? (keys($config)) : [] /}
-        {let $configs: $configKeys and $configKeys.length > 0 ? $configKeys.length/3 : 0 /}
+        {let $configs: $configKeys and $configKeys.length > 0 ? $configKeys.length/4 : 0 /}
         {let $visibleInputsCount: $configs > 0 ? $configs : 1 /}
 
         {for $i in range($visibleInputsCount)}
@@ -21,6 +21,7 @@
               {param includePattern: $config and $config['pattern-' + ($i+1)] ? $config['pattern-' + ($i+1)] : null /}
               {param size: $config and $config['size-' + ($i+1)] ? $config['size-' + ($i+1)] : null /}
               {param excludePattern: $config and $config['pattern-exclude-' + ($i+1)] ? $config['pattern-exclude-' + ($i+1)] : null /}
+              {param branchesPattern: $config and $config['pattern-branches-' + ($i+1)] ? $config['pattern-branches-' + ($i+1)] : null /}
               {param errors: $errors /}
           {/call}
         {/for}
@@ -42,6 +43,7 @@
  * @param includePattern
  * @param size
  * @param excludePattern
+ * @param branchesPattern
  * @param? errors
  */
 {template .anotherConfig}
@@ -51,7 +53,7 @@
             {param id: 'pattern-' + $count /}
             {param value: $includePattern ? $includePattern : '' /}
             {param isRequired: true /}
-            {param labelContent: 'Include Pattern' /}
+            {param labelContent: 'Include' /}
             {param descriptionText}
                 {getText('filesize-hook.includePattern.description')}
             {/param}
@@ -77,11 +79,24 @@
             {param id: 'pattern-exclude-' + $count /}
             {param value: $excludePattern ? $excludePattern : '' /}
             {param isRequired: false /}
-            {param labelContent: 'Exclude Pattern' /}
+            {param labelContent: 'Exclude' /}
             {param descriptionText}
                 {getText('filesize-hook.excludePattern.description')}
             {/param}
             {param errorTexts: $errors ? $errors['pattern-exclude-' + $count] : null /}
+        {/call}
+        </div>
+
+        <div class="filesize-hook-branches-pattern">
+        {call aui.form.textField}
+            {param id: 'pattern-branches-' + $count /}
+            {param value: $branchesPattern ? $branchesPattern : '' /}
+            {param isRequired: false /}
+            {param labelContent: 'Branches' /}
+            {param descriptionText}
+                {getText('filesize-hook.branchesPattern.description')}
+            {/param}
+            {param errorTexts: $errors ? $errors['pattern-branches-' + $count] : null /}
         {/call}
         </div>
 

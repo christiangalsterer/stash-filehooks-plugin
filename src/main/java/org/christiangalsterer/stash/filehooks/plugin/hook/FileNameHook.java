@@ -10,14 +10,12 @@ import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.setting.SettingsValidationErrors;
-import com.atlassian.pageobjects.elements.Option;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.*;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -32,7 +30,7 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
 
     private static final String SETTINGS_INCLUDE_PATTERN = "pattern";
     private static final String SETTINGS_EXCLUDE_PATTERN = "pattern-exclude";
-    private static final String SETTINGS_AFFECTED_BRANCHES = "affected-branches";
+    private static final String SETTINGS_BRANCHES_PATTERN = "pattern-branches";
 
     private final ChangesetService changesetService;
     private final I18nService i18n;
@@ -46,15 +44,15 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
     public boolean onReceive(@Nonnull RepositoryHookContext context, @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
         Repository repository = context.getRepository();
         FileNameHookSetting setting = getSettings(context.getSettings());
-        Optional<Pattern> affectedBranches = setting.getAffectedBranches();
+        Optional<Pattern> branchesPattern = setting.getBranchesPattern();
 
         Collection<RefChange> filteredRefChanges = FluentIterable.from(refChanges)
                 .filter(isNotDeleteRefChange)
                 .filter(isNotTagRefChange)
                 .toList();
 
-        if(affectedBranches.isPresent()) {
-            filteredRefChanges = Collections2.filter(filteredRefChanges, filterBranchesPredicate(affectedBranches.get()));
+        if(branchesPattern.isPresent()) {
+            filteredRefChanges = Collections2.filter(filteredRefChanges, filterBranchesPredicate(branchesPattern.get()));
         }
 
         Iterable<Change> changes = Iterables.concat(changesetService.getChanges(filteredRefChanges, repository));
@@ -73,10 +71,11 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
         if (filteredPaths.size() > 0) {
             hookResponse.out().println("=================================");
             for (String path : filteredPaths) {
-                String msg = String.format("File [%s] violates file name pattern [%s].",
-                        path, setting.getIncludePattern().pattern());
-                if(affectedBranches.isPresent()) {
-                    msg = String.format(msg + " For branches matching [%s] pattern.", affectedBranches.get());
+                String msg;
+                if(branchesPattern.isPresent()) {
+                    msg = String.format("File [%s] violates file name pattern [%s] for branch [%s].", path, setting.getIncludePattern().pattern(), branchesPattern.get());
+                } else {
+                    msg = String.format("File [%s] violates file name pattern [%s].", path, setting.getIncludePattern().pattern());
                 }
                 hookResponse.out().println(msg);
             }
@@ -89,9 +88,9 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
     private FileNameHookSetting getSettings(Settings settings) {
         String includeRegex = settings.getString(SETTINGS_INCLUDE_PATTERN);
         String excludeRegex = settings.getString(SETTINGS_EXCLUDE_PATTERN);
-        String affectedBranches = settings.getString(SETTINGS_AFFECTED_BRANCHES);
+        String branchesRegex = settings.getString(SETTINGS_BRANCHES_PATTERN);
 
-        return new FileNameHookSetting(includeRegex, excludeRegex, affectedBranches);
+        return new FileNameHookSetting(includeRegex, excludeRegex, branchesRegex);
     }
 
     @Override
@@ -115,11 +114,11 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
             }
         }
 
-        if (!Strings.isNullOrEmpty(settings.getString(SETTINGS_AFFECTED_BRANCHES))) {
+        if (!Strings.isNullOrEmpty(settings.getString(SETTINGS_BRANCHES_PATTERN))) {
             try {
-                Pattern.compile(settings.getString(SETTINGS_AFFECTED_BRANCHES));
+                Pattern.compile(settings.getString(SETTINGS_BRANCHES_PATTERN));
             } catch (PatternSyntaxException e) {
-                errors.addFieldError(SETTINGS_AFFECTED_BRANCHES, i18n.getText("filename-hook.error.pattern", "Affected branches pattern is not a valid regular expression"));
+                errors.addFieldError(SETTINGS_BRANCHES_PATTERN, i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
             }
         }
     }

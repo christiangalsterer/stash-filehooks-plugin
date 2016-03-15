@@ -15,13 +15,16 @@
                 $currentElement.attr('id', 'filesize-hook-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-include-pattern').find('label').attr('for', 'pattern-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-include-pattern').find('input').attr('id', 'pattern-' + $configElementIndex)
-                                             .attr('name', 'pattern-' + $configElementIndex);
+                    .attr('name', 'pattern-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-size').find('label').attr('for', 'size-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-size').find('input').attr('id', 'size-' + $configElementIndex)
-                                             .attr('name', 'size-' + $configElementIndex);
+                    .attr('name', 'size-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-excludePattern').find('label').attr('for', 'pattern-exclude-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-excludePattern').find('input').attr('id', 'pattern-exclude-' + $configElementIndex)
-                                             .attr('name', 'pattern-exclude-' + $configElementIndex);
+                    .attr('name', 'pattern-exclude-' + $configElementIndex);
+                $currentElement.find('.filesize-hook-branches-pattern').find('label').attr('for', 'pattern-branches-' + $configElementIndex);
+                $currentElement.find('.filesize-hook-branches-pattern').find('input').attr('id', 'pattern-branches-' + $configElementIndex)
+                    .attr('name', 'pattern-branches-' + $configElementIndex);
             });
 
             var $controlAdd = $container.find('#filesize-hook-add');

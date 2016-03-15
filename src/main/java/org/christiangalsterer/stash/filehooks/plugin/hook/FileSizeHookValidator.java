@@ -1,6 +1,5 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import antlr.StringUtils;
 import com.atlassian.bitbucket.i18n.I18nService;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
@@ -18,6 +17,8 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
     private static final String SETTINGS_INCLUDE_PATTERN_PREFIX = "pattern-";
     private static final String SETTINGS_EXCLUDE_PATTERN_PREFIX = "pattern-exclude-";
     private static final String SETTINGS_SIZE_PREFIX = "size-";
+    private static final String SETTINGS_BRANCHES_PATTERN_PREFIX = "pattern-branches-";
+
     private final I18nService i18n;
 
     public FileSizeHookValidator(I18nService i18n) {
@@ -31,7 +32,7 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
 
         final Set<String> params = settings.asMap().keySet();
         for (String param : params) {
-            if (param.startsWith(SETTINGS_INCLUDE_PATTERN_PREFIX) && !param.startsWith(SETTINGS_EXCLUDE_PATTERN_PREFIX)) {
+            if (param.matches(SETTINGS_INCLUDE_PATTERN_PREFIX + "[1-5]$")) {
                 patternParams++;
                 continue;
             }
@@ -60,11 +61,19 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
                 }
             }
 
-            if (!Strings.isNullOrEmpty(settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i))){
+            if (!Strings.isNullOrEmpty(settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i))) {
                 try {
                     Pattern.compile(settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i));
                 } catch (PatternSyntaxException e) {
                     errors.addFieldError(SETTINGS_EXCLUDE_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+                }
+            }
+
+            if (!Strings.isNullOrEmpty(settings.getString(SETTINGS_BRANCHES_PATTERN_PREFIX + i))) {
+                try {
+                    Pattern.compile(settings.getString(SETTINGS_BRANCHES_PATTERN_PREFIX + i));
+                } catch (PatternSyntaxException e) {
+                    errors.addFieldError(SETTINGS_BRANCHES_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
                 }
             }
         }
