@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import static com.google.common.collect.Iterables.transform;
 
@@ -31,6 +32,10 @@ public class ChangesetServiceImpl implements ChangesetService {
             public Iterable<Change> apply(RefChange refChange) {
                 // TODO Ideally this is one diff-tree git call
                 Iterable<String> csetss = transform(getCommitsBetween(repository, refChange), Functions.COMMIT_TO_ID);
+                if (Iterables.size(csetss) == 0) {
+                    // Changesets empty so return an empty set
+                    return Collections.emptySet();
+                }
                 return Iterables.concat(Iterables.transform(getChangesets(repository, csetss), Functions.CHANGESET_TO_CHANGES));
             }
         });
