@@ -12,6 +12,7 @@
   <component-import key="commitService" interface="com.atlassian.bitbucket.commit.CommitService"/>
   <component-import key="gitCmdBuilderFactory" interface="com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory"/>
   <component-import key="com.atlassian.bitbucket.i18n.I18nService" interface="com.atlassian.bitbucket.i18n.I18nService" />
+  <component-import key="gitScmConfig" interface="com.atlassian.bitbucket.scm.git.GitScmConfig" />
   <component key="changesetService" class="org.christiangalsterer.stash.filehooks.plugin.hook.ChangesetServiceImpl" public="false">
     <interface>org.christiangalsterer.stash.filehooks.plugin.hook.ChangesetService</interface>
   </component>
