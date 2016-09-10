@@ -15,11 +15,20 @@ The following example rejects all files larger then 1MB (1048576 bytes).
 
 ## File Name Hook
 In order to configure the hook go to your repository and select **Settings** -> **Hooks** -> **File Name Hook**.
-The following example rejects all files matching the pattern **readme.md**
+The following example rejects all files matching the pattern **readme.md** when the file is pushed or part of a merge request(pull request).
 
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-filename-hook-configuration.png)
 
 # Releases
+
+2.4.0 (2016-09-09)
+
+* File Name Hook:
+  * Checks the file name pattern also for merge requests(pull requests) and not only for pushes, thanks [ellaz](https://github.com/ellaz)to providing the pull request.
+
+2.3.1 (2016-08-31)
+
+* Fixes an issue with rollback commits and forced pushed to Bitbucket, thanks [ar613](https://github.com/ar613) for providing a fix.
 
 2.3.0 (2016-03-15)
 

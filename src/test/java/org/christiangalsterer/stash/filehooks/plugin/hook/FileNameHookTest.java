@@ -9,13 +9,11 @@ import com.atlassian.bitbucket.setting.Settings;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.christiangalsterer.stash.filehooks.plugin.hook.FileNameHook;
 import org.mockito.Mock;
 
 import static org.junit.Assert.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.hamcrest.core.Is.is;
-
 
 public class FileNameHookTest {
 
@@ -40,12 +38,9 @@ public class FileNameHookTest {
     @Mock
     private GitScmConfig gitScmConfig;
 
-    private FileNameHook fileNameHook;
-
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        fileNameHook = new FileNameHook(builderFactory, commitService, changesetService, i18n, gitScmConfig);
     }
 
     @Test
@@ -60,7 +55,6 @@ public class FileNameHookTest {
 
     @Test
     public void testValidate() throws Exception {
-
     }
 
     private boolean push() {

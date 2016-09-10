@@ -29,9 +29,6 @@ import com.google.common.collect.*;
 
 import javax.annotation.Nonnull;
 
-import org.christiangalsterer.stash.filehooks.plugin.hook.ChangesetService;
-import org.christiangalsterer.stash.filehooks.plugin.hook.MergeBaseResolver;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -54,8 +51,8 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
     private final ChangesetService changesetService;
     private final I18nService i18n;
     private final CommitService commitService; 
-    private final MergeBaseResolver mergeBaseResolver; 
-    
+    private final MergeBaseResolver mergeBaseResolver;
+
     public FileNameHook(GitCommandBuilderFactory builderFactory, CommitService commitService, ChangesetService changesetService, I18nService i18n, GitScmConfig gitScmConfig) {
         this.changesetService = changesetService;
         this.i18n = i18n;
@@ -146,19 +143,17 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
         }
     }
 	
-	  /**
+    /**
      * Callback, collecting all the paths, changed in the requested change 
      * range. 
      */ 
-    private static class ChangesPathsCollector extends AbstractChangeCallback { 
+    private static class ChangedPathsCollector extends AbstractChangeCallback {
         private final Collection<String> changedPaths = new HashSet<String>(); 
  
         @Override 
         public boolean onChange(Change change) throws IOException {
-        	//isNotDeleteChange
-        	if ( change.getType() != ChangeType.DELETE )
-        	{
-        		changedPaths.add(change.getPath().toString());
+        	if (change.getType() != ChangeType.DELETE) {
+                changedPaths.add(change.getPath().toString());
         	}
             return true; 
         } 
@@ -169,19 +164,17 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
  
     }  
   			 	
-	 private String getPullRequestError(Collection<String> filteredFiles) { 
-	        final StringBuilder sb = new StringBuilder(); 
-	        sb.append(i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression")); 
-	        sb.append("\n"); 
-	        final Iterator<String> iter = filteredFiles.iterator(); 
-	        while (iter.hasNext()) { 
-	            sb.append(iter.next()); 
-	            if (iter.hasNext()) { 
-	                sb.append(", "); 
-	            } 
-	        } 
-	        return sb.toString(); 
-	    } 
+    private String getPullRequestError(Collection<String> filteredFiles) {
+        final StringBuilder sb = new StringBuilder();
+        final Iterator<String> iter = filteredFiles.iterator();
+        while (iter.hasNext()) {
+            sb.append(iter.next());
+            if (iter.hasNext()) {
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
+    }
 	 
 	@Override
 	public void check(RepositoryMergeRequestCheckContext context) {
@@ -197,14 +190,10 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
             builder.sinceId(base.getId()); 
         } 
         final ChangesRequest pathsRequest = builder.build(); 
-        final ChangesPathsCollector pathsCallback = new ChangesPathsCollector(); 
-        commitService.streamChanges(pathsRequest, pathsCallback); 
-	    
-	    
-	    Collection<String> filteredFiles = pathsCallback.getChangedPaths(); 
-		 
-		
-	    filteredFiles = Collections2.filter(filteredFiles, Predicates.contains(setting.getIncludePattern()));	
+        final ChangedPathsCollector pathsCallback = new ChangedPathsCollector();
+        commitService.streamChanges(pathsRequest, pathsCallback);
+	    Collection<String> filteredFiles = pathsCallback.getChangedPaths();
+        filteredFiles = Collections2.filter(filteredFiles, Predicates.contains(setting.getIncludePattern()));
 		 
 		if(setting.getExcludePattern().isPresent()) {
 			 Pattern excludePattern = setting.getExcludePattern().get();
@@ -212,15 +201,12 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
 		}
 	    
 	    if (filteredFiles.size() > 0) {
-	        request.veto(i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"), getPullRequestError(filteredFiles));
+	        request.veto(i18n.getText("filename-hook.mergecheck.veto", "File Name Hook: The following files violate the file name pattern [{0}]:", setting.getIncludePattern().pattern()), getPullRequestError(filteredFiles));
 	    }     
 	}
 	
-	 private Commit getChangeSet(PullRequestRef prRef) { 
-	        final CommitRequest.Builder builder = new CommitRequest.Builder(prRef.getRepository(), 
-	                prRef.getLatestCommit()); 
-	        return commitService.getCommit(builder.build()); 
-	    } 
-
-	
+    private Commit getChangeSet(PullRequestRef prRef) {
+        final CommitRequest.Builder builder = new CommitRequest.Builder(prRef.getRepository(), prRef.getLatestCommit());
+        return commitService.getCommit(builder.build());
+    }
 }
