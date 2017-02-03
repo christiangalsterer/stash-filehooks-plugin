@@ -13,11 +13,11 @@
     <packaging>atlassian-plugin</packaging>
 
     <properties>
-        <bitbucket.version>4.0.0</bitbucket.version>
+        <bitbucket.version>4.13.0</bitbucket.version>
         <bitbucket.data.version>${bitbucket.version}</bitbucket.data.version>
-        <amps.version>6.1.0</amps.version>
+        <amps.version>6.2.4</amps.version>
         <plugin.testrunner.version>1.2.0</plugin.testrunner.version>
-        <maven-compiler-plugin>3.3</maven-compiler-plugin>
+        <maven-compiler-plugin>3.6.1</maven-compiler-plugin>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <commons-lang.version>2.6</commons-lang.version>
     </properties>
@@ -110,6 +110,8 @@
                             <instanceId>bitbucket</instanceId>
                             <version>${bitbucket.version}</version>
                             <dataVersion>${bitbucket.data.version}</dataVersion>
+                            <enableQuickReload>true</enableQuickReload>
+                            <enableFastdev>false</enableFastdev>
                         </product>
                     </products>
                 </configuration>
