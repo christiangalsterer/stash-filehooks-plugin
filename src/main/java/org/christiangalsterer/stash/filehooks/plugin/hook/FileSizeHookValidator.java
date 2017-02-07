@@ -39,25 +39,30 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
         }
 
         if (patternParams > MAX_SETTINGS)
-            errors.addFormError(i18n.getText("filesize-hook.error.max.settings", "Only {0} settings are allowed.", MAX_SETTINGS));
+            errors.addFormError(
+                i18n.getText("filesize-hook.error.max.settings", "Only {0} settings are allowed.", MAX_SETTINGS));
 
         for (int i = 1; i <= patternParams; i++) {
-           try {
+            try {
                 int size = Integer.parseInt(settings.getString(SETTINGS_SIZE_PREFIX + i, ""));
                 if (size < 1) {
-                    errors.addFieldError("size-" + i, i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
+                    errors.addFieldError("size-" + i,
+                        i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
                 }
             } catch (NumberFormatException e) {
-                errors.addFieldError(SETTINGS_SIZE_PREFIX + i, i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
+                errors.addFieldError(SETTINGS_SIZE_PREFIX + i,
+                    i18n.getText("filesize-hook.error.size", "Size must be an integer value larger than 0"));
             }
 
             if (Strings.isNullOrEmpty(settings.getString(SETTINGS_INCLUDE_PATTERN_PREFIX + i))) {
-                errors.addFieldError(SETTINGS_INCLUDE_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+                errors.addFieldError(SETTINGS_INCLUDE_PATTERN_PREFIX + i,
+                    i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
             } else {
                 try {
                     Pattern.compile(settings.getString(SETTINGS_INCLUDE_PATTERN_PREFIX + i, ""));
                 } catch (PatternSyntaxException e) {
-                    errors.addFieldError(SETTINGS_INCLUDE_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+                    errors.addFieldError(SETTINGS_INCLUDE_PATTERN_PREFIX + i,
+                        i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
                 }
             }
 
@@ -65,7 +70,8 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
                 try {
                     Pattern.compile(settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i));
                 } catch (PatternSyntaxException e) {
-                    errors.addFieldError(SETTINGS_EXCLUDE_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+                    errors.addFieldError(SETTINGS_EXCLUDE_PATTERN_PREFIX + i,
+                        i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
                 }
             }
 
@@ -73,7 +79,8 @@ public class FileSizeHookValidator implements RepositorySettingsValidator {
                 try {
                     Pattern.compile(settings.getString(SETTINGS_BRANCHES_PATTERN_PREFIX + i));
                 } catch (PatternSyntaxException e) {
-                    errors.addFieldError(SETTINGS_BRANCHES_PATTERN_PREFIX + i, i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
+                    errors.addFieldError(SETTINGS_BRANCHES_PATTERN_PREFIX + i,
+                        i18n.getText("filesize-hook.error.pattern", "Pattern is not a valid regular expression"));
                 }
             }
         }

@@ -18,7 +18,7 @@ import static org.hamcrest.core.Is.is;
 public class FileNameHookTest {
 
     @Mock
-    private ChangesetService changesetService;
+    private DiffTreeService diffTreeService;
 
     @Mock
     private I18nService i18n;
