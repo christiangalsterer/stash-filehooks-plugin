@@ -9,9 +9,11 @@ public class GitUtils {
     private GitUtils() {
     }
 
-    public static void setAlternateIfCrossRepository(CommandBuilderSupport<?> builder, Repository repository, Repository secondRepository, GitScmConfig config) {
+    public static void setAlternateIfCrossRepository(CommandBuilderSupport<?> builder, Repository repository,
+        Repository secondRepository, GitScmConfig config) {
         if (repository.getId() != secondRepository.getId()) {
-            builder.environment("GIT_ALTERNATE_OBJECT_DIRECTORIES", config.getObjectsDir(secondRepository).getAbsolutePath());
+            builder
+                .environment("GIT_ALTERNATE_OBJECT_DIRECTORIES", config.getObjectsDir(secondRepository).getAbsolutePath());
         }
     }
 }

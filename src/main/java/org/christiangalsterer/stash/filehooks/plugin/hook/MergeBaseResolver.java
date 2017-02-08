@@ -16,7 +16,8 @@ public class MergeBaseResolver {
     private final GitScmConfig gitScmConfig;
     private final CommitService commitService;
 
-    public MergeBaseResolver(GitCommandBuilderFactory builderFactory, GitScmConfig gitScmConfig, CommitService commitService) {
+    public MergeBaseResolver(GitCommandBuilderFactory builderFactory, GitScmConfig gitScmConfig,
+        CommitService commitService) {
         this.builderFactory = builderFactory;
         this.gitScmConfig = gitScmConfig;
         this.commitService = commitService;
@@ -26,7 +27,8 @@ public class MergeBaseResolver {
         if (a.equals(b)) {
             return a;
         }
-        final GitMergeBaseBuilder builder = builderFactory.builder(a.getRepository()).mergeBase().between(a.getId(), b.getId());
+        final GitMergeBaseBuilder builder =
+            builderFactory.builder(a.getRepository()).mergeBase().between(a.getId(), b.getId());
         GitUtils.setAlternateIfCrossRepository(builder, a.getRepository(), b.getRepository(), gitScmConfig);
 
         final String sha = builder.build(new FirstLineOutputHandler()).call();

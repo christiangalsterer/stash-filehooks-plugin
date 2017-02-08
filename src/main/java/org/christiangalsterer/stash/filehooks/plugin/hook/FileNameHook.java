@@ -23,19 +23,18 @@ import com.atlassian.bitbucket.scm.pull.MergeRequest;
 import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.setting.SettingsValidationErrors;
-import com.google.common.base.Predicates;
+import com.atlassian.fugue.Pair;
 import com.google.common.base.Strings;
-import com.google.common.collect.*;
 
 import javax.annotation.Nonnull;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.*;
 
@@ -47,55 +46,59 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
     private static final String SETTINGS_INCLUDE_PATTERN = "pattern";
     private static final String SETTINGS_EXCLUDE_PATTERN = "pattern-exclude";
     private static final String SETTINGS_BRANCHES_PATTERN = "pattern-branches";
+    private static final String TAG_REF = "refs/tags/";
 
-    private final ChangesetService changesetService;
+    private final DiffTreeService diffTreeService;
     private final I18nService i18n;
-    private final CommitService commitService; 
+    private final CommitService commitService;
     private final MergeBaseResolver mergeBaseResolver;
 
-    public FileNameHook(GitCommandBuilderFactory builderFactory, CommitService commitService, ChangesetService changesetService, I18nService i18n, GitScmConfig gitScmConfig) {
-        this.changesetService = changesetService;
+    public FileNameHook(GitCommandBuilderFactory builderFactory, CommitService commitService,
+        DiffTreeService diffTreeService, I18nService i18n, GitScmConfig gitScmConfig) {
+        this.diffTreeService = diffTreeService;
         this.i18n = i18n;
         this.commitService = commitService;
-        this.mergeBaseResolver = new MergeBaseResolver(builderFactory, gitScmConfig, commitService); 
+        this.mergeBaseResolver = new MergeBaseResolver(builderFactory, gitScmConfig, commitService);
     }
 
     @Override
-    public boolean onReceive(@Nonnull RepositoryHookContext context, @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
+    public boolean onReceive(@Nonnull RepositoryHookContext context, @Nonnull Collection<RefChange> refChanges,
+        @Nonnull HookResponse hookResponse) {
         Repository repository = context.getRepository();
         FileNameHookSetting setting = getSettings(context.getSettings());
         Optional<Pattern> branchesPattern = setting.getBranchesPattern();
 
-        Collection<RefChange> filteredRefChanges = FluentIterable.from(refChanges)
-                .filter(isNotDeleteRefChange)
-                .filter(isNotTagRefChange)
-                .toList();
+        Collection<RefChange> filteredRefChanges;
 
-        if(branchesPattern.isPresent()) {
-            filteredRefChanges = Collections2.filter(filteredRefChanges, filterBranchesPredicate(branchesPattern.get()));
+        if (branchesPattern.isPresent()) {
+            filteredRefChanges = refChanges.stream().filter(REF_CHANGE_NOT_DELETED)
+                .filter(refChange -> !refChange.getRef().getId().startsWith(TAG_REF))
+                .filter(filterBranchesPredicate(branchesPattern.get())).collect(Collectors.toList());
+        } else {
+            filteredRefChanges = refChanges.stream().filter(REF_CHANGE_NOT_DELETED).filter(REF_CHANGE_IS_NOT_TAG)
+                .collect(Collectors.toList());
         }
 
-        Iterable<Change> changes = Iterables.concat(changesetService.getChanges(filteredRefChanges, repository));
+        Iterable<Pair<String, String>> changedFiles = diffTreeService.getChangedFiles(filteredRefChanges, repository);
 
-        Collection<String> filteredPaths = FluentIterable.from(changes)
-                .filter(isNotDeleteChange)
-                .transform(Functions.CHANGE_TO_PATH)
-                .filter(Predicates.contains(setting.getIncludePattern()))
-                .toList();
+        Collection<String> filteredPaths = StreamSupport.stream(changedFiles.spliterator(), false).map(Pair::right)
+            .filter(setting.getIncludePattern().asPredicate()).collect(Collectors.toList());
 
-        if(setting.getExcludePattern().isPresent()) {
-            Pattern excludePattern = setting.getExcludePattern().get();
-            filteredPaths = Collections2.filter(filteredPaths, Predicates.not(Predicates.contains(excludePattern)));
+        if (setting.getExcludePattern().isPresent()) {
+            filteredPaths = filteredPaths.stream().filter(setting.getExcludePattern().get().asPredicate().negate())
+                .collect(Collectors.toList());
         }
 
         if (filteredPaths.size() > 0) {
             hookResponse.out().println("=================================");
             for (String path : filteredPaths) {
                 String msg;
-                if(branchesPattern.isPresent()) {
-                    msg = String.format("File [%s] violates file name pattern [%s] for branch [%s].", path, setting.getIncludePattern().pattern(), branchesPattern.get());
+                if (branchesPattern.isPresent()) {
+                    msg = String.format("File [%s] violates file name pattern [%s] for branch [%s].", path,
+                        setting.getIncludePattern().pattern(), branchesPattern.get());
                 } else {
-                    msg = String.format("File [%s] violates file name pattern [%s].", path, setting.getIncludePattern().pattern());
+                    msg = String
+                        .format("File [%s] violates file name pattern [%s].", path, setting.getIncludePattern().pattern());
                 }
                 hookResponse.out().println(msg);
             }
@@ -116,21 +119,24 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
     @Override
     public void validate(Settings settings, SettingsValidationErrors errors, Repository repository) {
 
-        if (Strings.isNullOrEmpty(settings.getString(SETTINGS_INCLUDE_PATTERN))){
-            errors.addFieldError(SETTINGS_INCLUDE_PATTERN, i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
+        if (Strings.isNullOrEmpty(settings.getString(SETTINGS_INCLUDE_PATTERN))) {
+            errors.addFieldError(SETTINGS_INCLUDE_PATTERN,
+                i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
         } else {
             try {
                 Pattern.compile(settings.getString(SETTINGS_INCLUDE_PATTERN, ""));
             } catch (PatternSyntaxException e) {
-                errors.addFieldError(SETTINGS_INCLUDE_PATTERN, i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
+                errors.addFieldError(SETTINGS_INCLUDE_PATTERN,
+                    i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
             }
         }
 
-        if (!Strings.isNullOrEmpty(settings.getString(SETTINGS_EXCLUDE_PATTERN))){
+        if (!Strings.isNullOrEmpty(settings.getString(SETTINGS_EXCLUDE_PATTERN))) {
             try {
                 Pattern.compile(settings.getString(SETTINGS_EXCLUDE_PATTERN));
             } catch (PatternSyntaxException e) {
-                errors.addFieldError(SETTINGS_EXCLUDE_PATTERN, i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
+                errors.addFieldError(SETTINGS_EXCLUDE_PATTERN,
+                    i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
             }
         }
 
@@ -138,75 +144,73 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
             try {
                 Pattern.compile(settings.getString(SETTINGS_BRANCHES_PATTERN));
             } catch (PatternSyntaxException e) {
-                errors.addFieldError(SETTINGS_BRANCHES_PATTERN, i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
+                errors.addFieldError(SETTINGS_BRANCHES_PATTERN,
+                    i18n.getText("filename-hook.error.pattern", "Pattern is not a valid regular expression"));
             }
         }
     }
-	
-    /**
-     * Callback, collecting all the paths, changed in the requested change 
-     * range. 
-     */ 
-    private static class ChangedPathsCollector extends AbstractChangeCallback {
-        private final Collection<String> changedPaths = new HashSet<String>(); 
- 
-        @Override 
-        public boolean onChange(Change change) throws IOException {
-        	if (change.getType() != ChangeType.DELETE) {
-                changedPaths.add(change.getPath().toString());
-        	}
-            return true; 
-        } 
- 
-        public Collection<String> getChangedPaths() { 
-            return changedPaths; 
-        } 
- 
-    }  
-  			 	
+
     private String getPullRequestError(Collection<String> filteredFiles) {
-        final StringBuilder sb = new StringBuilder();
-        final Iterator<String> iter = filteredFiles.iterator();
-        while (iter.hasNext()) {
-            sb.append(iter.next());
-            if (iter.hasNext()) {
-                sb.append(", ");
-            }
-        }
-        return sb.toString();
+        return filteredFiles.stream().collect(Collectors.joining(", "));
     }
-	 
-	@Override
-	public void check(RepositoryMergeRequestCheckContext context) {
-		final MergeRequest request = context.getMergeRequest();
-		final PullRequest pr = request.getPullRequest();
-		final Commit prFrom = getChangeSet(pr.getFromRef());
-		final Commit prTo = getChangeSet(pr.getToRef());
-		final Commit base = mergeBaseResolver.findMergeBase(prFrom, prTo);
-	    final FileNameHookSetting setting = getSettings(context.getSettings());
-	    
-		final ChangesRequest.Builder builder = new ChangesRequest.Builder(prFrom.getRepository(), prFrom.getId()); 
-        if (base.getId() != null) { 
-            builder.sinceId(base.getId()); 
-        } 
-        final ChangesRequest pathsRequest = builder.build(); 
+
+    @Override
+    public void check(RepositoryMergeRequestCheckContext context) {
+        final MergeRequest request = context.getMergeRequest();
+        final PullRequest pullRequest = request.getPullRequest();
+        final Commit pullRequestFrom = getChangeSet(pullRequest.getFromRef());
+        final Commit pullRequestTo = getChangeSet(pullRequest.getToRef());
+        final Commit base = mergeBaseResolver.findMergeBase(pullRequestFrom, pullRequestTo);
+        final FileNameHookSetting setting = getSettings(context.getSettings());
+
+        final ChangesRequest pathsRequest =
+            new ChangesRequest.Builder(pullRequestFrom.getRepository(), pullRequestFrom.getId()).sinceId(base.getId())
+                .build();
+
         final ChangedPathsCollector pathsCallback = new ChangedPathsCollector();
+
         commitService.streamChanges(pathsRequest, pathsCallback);
-	    Collection<String> filteredFiles = pathsCallback.getChangedPaths();
-        filteredFiles = Collections2.filter(filteredFiles, Predicates.contains(setting.getIncludePattern()));
-		 
-		if(setting.getExcludePattern().isPresent()) {
-			 Pattern excludePattern = setting.getExcludePattern().get();
-			 filteredFiles = Collections2.filter(filteredFiles, Predicates.not(Predicates.contains(excludePattern)));
-		}
-	    
-	    if (filteredFiles.size() > 0) {
-	        request.veto(i18n.getText("filename-hook.mergecheck.veto", "File Name Hook: The following files violate the file name pattern [{0}]:", setting.getIncludePattern().pattern()), getPullRequestError(filteredFiles));
-	    }     
-	}
-	
-    private Commit getChangeSet(PullRequestRef prRef) {
-        final CommitRequest.Builder builder = new CommitRequest.Builder(prRef.getRepository(), prRef.getLatestCommit());
+        Collection<String> filteredFiles =
+            pathsCallback.getChangedPaths().stream().filter(setting.getIncludePattern().asPredicate())
+                .collect(Collectors.toList());
+
+        if (setting.getExcludePattern().isPresent()) {
+            filteredFiles = filteredFiles.stream().filter(setting.getExcludePattern().get().asPredicate().negate())
+                .collect(Collectors.toList());
+        }
+
+        if (filteredFiles.size() > 0) {
+            request.veto(i18n.getText("filename-hook.mergecheck.veto",
+                "File Name Hook: The following files violate the file name pattern [{0}]:",
+                setting.getIncludePattern().pattern()), getPullRequestError(filteredFiles));
+        }
+    }
+
+    private Commit getChangeSet(PullRequestRef pullRequestRef) {
+        final CommitRequest.Builder builder =
+            new CommitRequest.Builder(pullRequestRef.getRepository(), pullRequestRef.getLatestCommit());
         return commitService.getCommit(builder.build());
+    }
+
+    /**
+     * Callback, collecting all the paths, changed in the requested change
+     * range.
+     */
+    private static class ChangedPathsCollector extends AbstractChangeCallback {
+
+        private final Collection<String> changedPaths = new HashSet<String>();
+
+        @Override
+        public boolean onChange(Change change) throws IOException {
+            if (change.getType() != ChangeType.DELETE) {
+                changedPaths.add(change.getPath().toString());
+            }
+            return true;
+        }
+
+        public Collection<String> getChangedPaths() {
+            return changedPaths;
+        }
+
     }
 }
