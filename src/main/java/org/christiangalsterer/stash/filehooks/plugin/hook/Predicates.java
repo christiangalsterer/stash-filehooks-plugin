@@ -32,7 +32,7 @@ public class Predicates {
 
         @Override
         public boolean apply(RefChange refChange) {
-            return !refChange.getRefId().startsWith(TAG_REF);
+            return !refChange.getRef().getId().startsWith(TAG_REF);
         }
     };
 

@@ -21,6 +21,10 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 # Releases
 
+3.0.0 (2017-05-07)
+
+* Compatibility with Bitbucket Server 5.0.x
+
 2.4.0 (2016-09-09)
 
 * File Name Hook:
