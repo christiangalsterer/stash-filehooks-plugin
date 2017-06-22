@@ -45,6 +45,11 @@ public class ChangesetServiceImpl implements ChangesetService {
         return new PagedIterable<Commit>(new PageProvider<Commit>() {
             @Override
             public Page<Commit> get(PageRequest pageRequest) {
+                if (refChange.getFromHash().equals("0000000000000000000000000000000000000000")) {
+                    return commitService.getCommitsBetween(new CommitsBetweenRequest.Builder(repository)
+                                                           .include(refChange.getToHash())
+                                                           .build(), pageRequest);
+                }
                 return commitService.getCommitsBetween(new CommitsBetweenRequest.Builder(repository)
                         .exclude(refChange.getFromHash())
                         .include(refChange.getToHash())
