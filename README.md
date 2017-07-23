@@ -21,6 +21,11 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 # Releases
 
+3.1.0 (2017-??-??)
+
+* [Fixes in a corner case issue to find the correct git hash](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/27), thanks [syee514](https://github.com/syee514) for providing a fix.
+
+
 3.0.0 (2017-05-07)
 
 * Compatibility with Bitbucket Server 5.0.x
@@ -28,7 +33,7 @@ The following example rejects all files matching the pattern **readme.md** when 
 2.4.0 (2016-09-09)
 
 * File Name Hook:
-  * Checks the file name pattern also for merge requests(pull requests) and not only for pushes, thanks [ellaz](https://github.com/ellaz)to providing the pull request.
+  * Checks the file name pattern also for merge requests(pull requests) and not only for pushes, thanks [ellaz](https://github.com/ellaz) for providing the pull request.
 
 2.3.1 (2016-08-31)
 
