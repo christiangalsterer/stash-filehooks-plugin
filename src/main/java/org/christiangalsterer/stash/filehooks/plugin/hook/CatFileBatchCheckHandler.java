@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements CommandInputHandler, CommandOutputHandler<List<Pair<String, Long>>> {
@@ -19,8 +20,8 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	private final Iterable<String> changesets;
 	private final List<Pair<String, Long>> values = Lists.newArrayList();
 
-	public CatFileBatchCheckHandler(Iterable<String> changesets) {
-		super(Charset.forName("UTF-8"));
+	CatFileBatchCheckHandler(Iterable<String> changesets) {
+		super(StandardCharsets.UTF_8);
 		this.changesets = changesets;
 	}
 
@@ -54,8 +55,8 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	public void process(OutputStream input) {
 		try {
 			for (String c : changesets) {
-				input.write(c.getBytes("UTF-8"));
-				input.write("\n".getBytes("UTF-8"));
+				input.write(c.getBytes(StandardCharsets.UTF_8.name()));
+				input.write("\n".getBytes(StandardCharsets.UTF_8.name()));
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);

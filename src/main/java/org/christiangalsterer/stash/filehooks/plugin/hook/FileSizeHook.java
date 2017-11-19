@@ -11,18 +11,14 @@ import com.atlassian.bitbucket.scm.Command;
 import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
 import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.setting.Settings;
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
-import com.google.common.collect.*;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import static com.google.common.base.Functions.compose;
-import static com.google.common.collect.Iterables.addAll;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Iterables.*;
 import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.*;
 
 /**
@@ -50,33 +46,31 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
         Optional<Pattern> branchesPattern = Optional.empty();
 
-        Map<Long, Collection<String>> pathAndSizes = new HashMap<Long, Collection<String>>();
+        Map<Long, Collection<String>> pathAndSizes = new HashMap<>();
 
         for (FileSizeHookSetting setting : settings) {
-            Collection<String> paths = new ArrayList<String>();
+            Collection<String> violatingPaths = new ArrayList<>();
             Pattern includePattern = setting.getIncludePattern();
             Long maxFileSize = setting.getSize();
             branchesPattern = setting.getBranchesPattern();
 
-            Collection<RefChange> filteredRefChanges = FluentIterable.from(refChanges)
-                    .filter(isNotDeleteRefChange)
-                    .filter(isNotTagRefChange)
-                    .toList();
+            Collection<RefChange> filteredRefChanges = refChanges.stream().filter(isNotDeleteRefChange).filter(isNotTagRefChange).collect(Collectors.toList());
 
             if(branchesPattern.isPresent()) {
-                filteredRefChanges = Collections2.filter(filteredRefChanges, filterBranchesPredicate(branchesPattern.get()));
+                filteredRefChanges = filteredRefChanges.stream().filter(matchesBranchPattern(branchesPattern.get())).collect(Collectors.toList());
             }
 
-            Iterable<String> filteredPaths = filter((Multimaps.index(
-                    filter(getChanges(repository, filteredRefChanges),
-                            Predicates.compose(Range.greaterThan(maxFileSize), Pair.<Long>rightValue())),
-                            compose(Functions.CHANGE_TO_PATH, Pair.<Change>leftValue())).keySet()), Predicates.contains(includePattern));
+            Iterable<String> filteredPaths = StreamSupport.stream(getChanges(repository, filteredRefChanges).spliterator(), false).filter(p -> p.right() > maxFileSize).filter(p -> p.left().getPath().toString().matches(includePattern.pattern())).map(p -> p.left().getPath().toString()).collect(Collectors.toList());
 
             if (setting.getExcludePattern().isPresent())
-                filteredPaths = filter(filteredPaths, Predicates.not(Predicates.contains(setting.getExcludePattern().get())));
+                filteredPaths = StreamSupport.stream(filteredPaths.spliterator(), false).filter(setting.getExcludePattern().get().asPredicate().negate()).collect(Collectors.toList());
 
-            addAll(paths, filteredPaths);
-            pathAndSizes.put(maxFileSize, paths);
+            addAll(violatingPaths, filteredPaths);
+
+            if (pathAndSizes.containsKey(maxFileSize))
+                addAll(violatingPaths, pathAndSizes.get(maxFileSize));
+
+            pathAndSizes.put(maxFileSize, violatingPaths);
          }
 
         boolean hookPassed = true;
@@ -97,7 +91,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
     }
 
     private List<FileSizeHookSetting> getSettings(Settings settings) {
-        List<FileSizeHookSetting> configurations = new ArrayList<FileSizeHookSetting>();
+        List<FileSizeHookSetting> configurations = new ArrayList<>();
         String includeRegex;
         Long size;
         String excludeRegex;
@@ -117,23 +111,19 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
     }
 
     private Iterable<Pair<Change, Long>> getChanges(Repository repository, Iterable<RefChange> refChanges) {
-        return zipWithSize(filter(Iterables.concat(changesetService.getChanges(refChanges, repository)), isNotDeleteChange), repository);
+        List<Change> changes = StreamSupport.stream(changesetService.getChanges(refChanges, repository).spliterator(), false).filter(isNotDeleteChange).collect(Collectors.toList());
+        return zipWithSize(changes, repository);
     }
 
     private Iterable<Pair<Change, Long>> zipWithSize(Iterable<Change> changes, Repository repository) {
-        // TODO We really shouldn't need a multimap
-        Multimap<String, Change> commit2changes = Multimaps.index(changes, Functions.CHANGE_TO_CONTENTID);
-        CatFileBatchCheckHandler handler = new CatFileBatchCheckHandler(commit2changes.keySet());
-        Command<List<Pair<String, Long>>> cmd = commandFactory.builder(repository).command("cat-file").argument("--batch-check").inputHandler(handler).build(handler);
-        return transform(cmd.call(), this.<String, Change, Long>getFromMap(commit2changes));
-    }
+        Map<String, List<Change>> contentIdsToChanges = new HashMap<>();
+        for (Change change : changes) {
+            contentIdsToChanges.computeIfAbsent(change.getContentId(), c -> new ArrayList<>()).add(change);
+        }
 
-    private <K, T, R> Function<Pair<K, R>, Pair<T, R>> getFromMap(final Multimap<K, T> commit2changes) {
-        return new Function<Pair<K, R>, Pair<T, R>>() {
-            @Override
-            public Pair<T, R> apply(Pair<K, R> input) {
-                return Pair.pair(Iterables.getFirst(commit2changes.get(input.left()), null), input.right());
-            }
-        };
+        CatFileBatchCheckHandler handler = new CatFileBatchCheckHandler(contentIdsToChanges.keySet());
+        Command<List<Pair<String, Long>>> cmd = commandFactory.builder(repository).command("cat-file").argument("--batch-check").inputHandler(handler).build(handler);
+
+        return cmd.call().stream().map(p -> Pair.pair(contentIdsToChanges.get(p.left()), p.right())).collect(Collectors.toList()).stream().flatMap(i -> i.left().stream().map(c -> Pair.pair(c, i.right()))).collect(Collectors.toList());
     }
 }

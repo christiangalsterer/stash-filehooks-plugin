@@ -2,6 +2,7 @@ package org.christiangalsterer.stash.filehooks.plugin.hook;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import javax.annotation.Nullable; 
  
@@ -17,8 +18,8 @@ public class FirstLineOutputHandler extends LineReaderOutputHandler implements
  
     private String sha; 
  
-    public FirstLineOutputHandler() {
-        super(Charset.forName("UTF-8"));
+    FirstLineOutputHandler() {
+        super(StandardCharsets.UTF_8);
     } 
  
     @Nullable 

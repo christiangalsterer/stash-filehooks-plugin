@@ -23,7 +23,6 @@ import com.atlassian.bitbucket.scm.pull.MergeRequest;
 import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.setting.SettingsValidationErrors;
-import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.*;
 
@@ -36,6 +35,8 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.*;
 
@@ -66,26 +67,19 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
         FileNameHookSetting setting = getSettings(context.getSettings());
         Optional<Pattern> branchesPattern = setting.getBranchesPattern();
 
-        Collection<RefChange> filteredRefChanges = FluentIterable.from(refChanges)
-                .filter(isNotDeleteRefChange)
-                .filter(isNotTagRefChange)
-                .toList();
+        Collection<RefChange> filteredRefChanges = refChanges.stream().filter(isNotDeleteRefChange).filter(isNotTagRefChange).collect(Collectors.toList());
 
         if(branchesPattern.isPresent()) {
-            filteredRefChanges = Collections2.filter(filteredRefChanges, filterBranchesPredicate(branchesPattern.get()));
+            filteredRefChanges = filteredRefChanges.stream().filter(matchesBranchPattern(branchesPattern.get())).collect(Collectors.toList());
         }
 
-        Iterable<Change> changes = Iterables.concat(changesetService.getChanges(filteredRefChanges, repository));
+        Iterable<Change> changes = changesetService.getChanges(filteredRefChanges, repository);
 
-        Collection<String> filteredPaths = FluentIterable.from(changes)
-                .filter(isNotDeleteChange)
-                .transform(Functions.CHANGE_TO_PATH)
-                .filter(Predicates.contains(setting.getIncludePattern()))
-                .toList();
+        Collection<String> filteredPaths = StreamSupport.stream(changes.spliterator(), false).filter(isNotDeleteChange).map(Functions.CHANGE_TO_PATH).filter(setting.getIncludePattern().asPredicate()).collect(Collectors.toList());
 
         if(setting.getExcludePattern().isPresent()) {
             Pattern excludePattern = setting.getExcludePattern().get();
-            filteredPaths = Collections2.filter(filteredPaths, Predicates.not(Predicates.contains(excludePattern)));
+            filteredPaths = filteredPaths.stream().filter(excludePattern.asPredicate().negate()).collect(Collectors.toList());
         }
 
         if (filteredPaths.size() > 0) {
@@ -148,7 +142,7 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
      * range. 
      */ 
     private static class ChangedPathsCollector extends AbstractChangeCallback {
-        private final Collection<String> changedPaths = new HashSet<String>(); 
+        private final Collection<String> changedPaths = new HashSet<>();
  
         @Override 
         public boolean onChange(Change change) throws IOException {
@@ -158,7 +152,7 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
             return true; 
         } 
  
-        public Collection<String> getChangedPaths() { 
+        Collection<String> getChangedPaths() {
             return changedPaths; 
         } 
  
@@ -193,11 +187,11 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
         final ChangedPathsCollector pathsCallback = new ChangedPathsCollector();
         commitService.streamChanges(pathsRequest, pathsCallback);
 	    Collection<String> filteredFiles = pathsCallback.getChangedPaths();
-        filteredFiles = Collections2.filter(filteredFiles, Predicates.contains(setting.getIncludePattern()));
+        filteredFiles = filteredFiles.stream().filter(setting.getIncludePattern().asPredicate()).collect(Collectors.toList());
 		 
 		if(setting.getExcludePattern().isPresent()) {
 			 Pattern excludePattern = setting.getExcludePattern().get();
-			 filteredFiles = Collections2.filter(filteredFiles, Predicates.not(Predicates.contains(excludePattern)));
+			 filteredFiles = filteredFiles.stream().filter(excludePattern.asPredicate().negate()).collect(Collectors.toList());
 		}
 	    
 	    if (filteredFiles.size() > 0) {

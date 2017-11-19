@@ -33,6 +33,10 @@
   <repository-hook key="filesize-hook" name="File Size Hook" i18n-name-key="filesize-hook.name" class="org.christiangalsterer.stash.filehooks.plugin.hook.FileSizeHook">
     <description key="filesize-hook.description">Reject commits that contain files larger a configured file size limit.</description>
     <icon>images/filesize.png</icon>
+    <scopes>
+      <scope>project</scope>
+      <scope>repository</scope>
+    </scopes>
     <config-form name="File Size Hook Configuration" key="filesize-hook-config-form">
       <view>stash.filehooks.size.formContents</view>
       <directory location="/static/"/>
@@ -43,6 +47,10 @@
   <repository-hook key="filename-hook" name="File Name Hook" i18n-name-key="filename-hook.name" class="org.christiangalsterer.stash.filehooks.plugin.hook.FileNameHook">
     <description key="filename-hook.description">Reject commits that contain files matching a regular expression for file and/or path name.</description>
     <icon>images/filename.png</icon>
+    <scopes>
+      <scope>project</scope>
+      <scope>repository</scope>
+    </scopes>
     <config-form name="File Name Hook Configuration" key="filename-hook-config-form">
       <view>stash.filehooks.name.formContents</view>
       <directory location="/static/"/>

@@ -10,19 +10,19 @@ import com.atlassian.bitbucket.scm.git.command.merge.GitMergeBaseBuilder;
 /**
  * Determines the merge base of a pair of commits.
  */
-public class MergeBaseResolver {
+class MergeBaseResolver {
 
     private final GitCommandBuilderFactory builderFactory;
     private final GitScmConfig gitScmConfig;
     private final CommitService commitService;
 
-    public MergeBaseResolver(GitCommandBuilderFactory builderFactory, GitScmConfig gitScmConfig, CommitService commitService) {
+    MergeBaseResolver(GitCommandBuilderFactory builderFactory, GitScmConfig gitScmConfig, CommitService commitService) {
         this.builderFactory = builderFactory;
         this.gitScmConfig = gitScmConfig;
         this.commitService = commitService;
     }
 
-    public Commit findMergeBase(Commit a, Commit b) {
+    Commit findMergeBase(Commit a, Commit b) {
         if (a.equals(b)) {
             return a;
         }

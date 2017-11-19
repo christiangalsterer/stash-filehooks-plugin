@@ -6,5 +6,5 @@ import com.atlassian.bitbucket.repository.Repository;
 
 public interface ChangesetService {
 
-    Iterable<Iterable<Change>> getChanges(Iterable<RefChange> refChanges, final Repository repository);
+    Iterable<Change> getChanges(Iterable<RefChange> refChanges, final Repository repository);
 }
