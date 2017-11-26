@@ -4,7 +4,6 @@ import com.atlassian.bitbucket.content.Change;
 import com.atlassian.bitbucket.content.ChangeType;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.RefChangeType;
-import com.atlassian.bitbucket.scm.git.GitRefPattern;
 
 import java.util.function.Predicate;
 import java.util.regex.Pattern;

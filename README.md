@@ -21,10 +21,10 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 # Releases
 
-3.1.0 (2017-11-)
+3.1.0 (2017-11-26)
 
 * [Fix: When multiple size rules use the same size, only last rule is effective](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/31)
-* [Feature: File hook should be available at Project level](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/35)
+* [Feature: File hook should be available at Project level](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/35). Please note that the UI is not perfect yet and will be adjusred in one of the next versions.
 
 3.0.1 (2017-11-12)
 
