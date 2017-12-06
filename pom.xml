@@ -25,7 +25,7 @@
     <packaging>atlassian-plugin</packaging>
 
     <properties>
-        <bitbucket.version>5.2.0</bitbucket.version>
+        <bitbucket.version>4.8.0</bitbucket.version>
         <bitbucket.data.version>${bitbucket.version}</bitbucket.data.version>
         <amps.version>6.3.0</amps.version>
         <plugin.testrunner.version>1.2.3</plugin.testrunner.version>
