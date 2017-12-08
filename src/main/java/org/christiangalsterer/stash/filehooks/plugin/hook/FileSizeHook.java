@@ -13,6 +13,8 @@ import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.setting.Settings;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -42,6 +44,9 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
 
     @Override
     public boolean onReceive(@Nonnull RepositoryHookContext context, @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
+        Instant start = Instant.now();
+        hookResponse.out().format("Hook start: %s\n", start);
+
         Repository repository = context.getRepository();
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
         Optional<Pattern> branchesPattern = Optional.empty();
@@ -54,13 +59,19 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             Long maxFileSize = setting.getSize();
             branchesPattern = setting.getBranchesPattern();
 
+            hookResponse.out().format("Setting [%s]: %d ms\n", includePattern,
+                    Duration.between(start, Instant.now()).toMillis());
             Collection<RefChange> filteredRefChanges = refChanges.stream().filter(isNotDeleteRefChange).filter(isNotTagRefChange).collect(Collectors.toList());
+            hookResponse.out().format("Filtered changes [%d]: %d ms\n", filteredRefChanges.size(),
+                    Duration.between(start, Instant.now()).toMillis());
 
             if(branchesPattern.isPresent()) {
                 filteredRefChanges = filteredRefChanges.stream().filter(matchesBranchPattern(branchesPattern.get())).collect(Collectors.toList());
             }
 
             Iterable<String> filteredPaths = StreamSupport.stream(getChanges(repository, filteredRefChanges).spliterator(), false).filter(p -> p.right() > maxFileSize).filter(p -> p.left().getPath().toString().matches(includePattern.pattern())).map(p -> p.left().getPath().toString()).collect(Collectors.toList());
+            hookResponse.out().format("Filtered paths: %d ms\n",
+                    Duration.between(start, Instant.now()).toMillis());
 
             if (setting.getExcludePattern().isPresent())
                 filteredPaths = StreamSupport.stream(filteredPaths.spliterator(), false).filter(setting.getExcludePattern().get().asPredicate().negate()).collect(Collectors.toList());
@@ -86,6 +97,10 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                 hookResponse.out().println("=================================");
             }
         }
+
+        Instant finish = Instant.now();
+        hookResponse.out().format("Hook finish: %s\n", finish);
+        hookResponse.out().format("Elapsed: %d ms\n", Duration.between(start, finish).toMillis());
 
         return hookPassed;
     }
