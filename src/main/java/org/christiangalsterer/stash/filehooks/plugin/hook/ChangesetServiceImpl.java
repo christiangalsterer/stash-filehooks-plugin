@@ -8,8 +8,11 @@ import com.atlassian.bitbucket.util.PageRequestImpl;
 import com.atlassian.bitbucket.util.PagedIterable;
 import com.google.common.collect.Iterables;
 
+import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -54,17 +57,19 @@ public class ChangesetServiceImpl implements ChangesetService {
 
     @Override
     public Iterable<Commit> getCommitsBetween(final Repository repository, final RefChange refChange) {
-        return new PagedIterable<>(pageRequest -> {
-            if (refChange.getFromHash().equals("0000000000000000000000000000000000000000")) {
-                return commitService.getCommitsBetween(new CommitsBetweenRequest.Builder(repository)
-                        .include(refChange.getToHash())
-                        .build(), pageRequest);
+        List<Commit> commits = new LinkedList<>();
+        CommitsBetweenRequest request = new CommitsBetweenRequest.Builder(repository)
+                .exclude(refChange.getFromHash())
+                .include(refChange.getToHash())
+                .build();
+        commitService.streamCommitsBetween(request, new AbstractCommitCallback() {
+            @Override
+            public boolean onCommit(@Nonnull Commit commit) throws IOException {
+                commits.add(commit);
+                return true;
             }
-            return commitService.getCommitsBetween(new CommitsBetweenRequest.Builder(repository)
-                    .exclude(refChange.getFromHash())
-                    .include(refChange.getToHash())
-                    .build(), pageRequest);
-        }, PAGE_REQUEST);
+        });
+        return commits;
     }
 
     private Iterable<Changeset> getChangesets(final Repository repository, Iterable<Commit> commits) {
