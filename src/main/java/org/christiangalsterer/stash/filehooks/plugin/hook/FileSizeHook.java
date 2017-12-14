@@ -12,6 +12,7 @@ import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
 import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.fugue.Pair;
+import com.google.common.collect.Iterables;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
@@ -87,6 +88,12 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                                             hookResponse.out().format("Getting commits: %d ms\n",
                                                     Duration.between(start, Instant.now()).toMillis());
                                             Iterable<Commit> refCommits = changesetService.getCommitsBetween(repository, x);
+                                            hookResponse.out().format("Got commits: %d ms\n",
+                                                    Duration.between(start, Instant.now()).toMillis());
+                                            hookResponse.out().format("Got commits, size %d: %d ms\n",
+                                                    Iterables.size(refCommits), Duration.between(start, Instant.now()).toMillis());
+                                            hookResponse.out().format("Got commits, size %d: %d ms\n",
+                                                    Iterables.size(refCommits), Duration.between(start, Instant.now()).toMillis());
                                             hookResponse.out().format("Got commits: %d ms\n",
                                                     Duration.between(start, Instant.now()).toMillis());
                                             return refCommits;
