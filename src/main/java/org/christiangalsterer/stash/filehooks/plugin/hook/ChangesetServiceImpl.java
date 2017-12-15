@@ -10,10 +10,7 @@ import com.google.common.collect.Iterables;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -34,25 +31,24 @@ public class ChangesetServiceImpl implements ChangesetService {
 
         for (RefChange refChange : refChanges) {
             Iterable<Commit> commits = getCommitsBetween(repository, refChange);
-            Iterables.addAll(changes, getChanges(repository, commits));
+            for (Iterable<Change> values : getChanges(repository, commits).values()) {
+                Iterables.addAll(changes, values);
+            }
         }
 
         return changes;
     }
 
     @Override
-    public Iterable<Change> getChanges(final Repository repository, Iterable<Commit> commits) {
-        List<Change> changes = new ArrayList<>();
+    public Map<Commit, Iterable<Change>> getChanges(final Repository repository, Iterable<Commit> commits) {
+        Map<Commit, Iterable<Change>> changesByCommit = new HashMap<>();
 
         Iterable<Changeset> changesets = getChangesets(repository, commits);
         for (Changeset changeset : changesets) {
-            Iterable<Change> values = changeset.getChanges().getValues();
-            for (Change change : values) {
-                changes.add(change);
-            }
+            changesByCommit.put(changeset.getToCommit(), changeset.getChanges().getValues());
         }
 
-        return changes;
+        return changesByCommit;
     }
 
     @Override

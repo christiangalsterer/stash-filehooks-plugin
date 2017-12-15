@@ -5,8 +5,10 @@ import com.atlassian.bitbucket.content.Change;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
 
+import java.util.Map;
+
 public interface ChangesetService {
     Iterable<Change> getChanges(Iterable<RefChange> refChanges, final Repository repository);
-    Iterable<Change> getChanges(final Repository repository, Iterable<Commit> commits);
+    Map<Commit, Iterable<Change>> getChanges(final Repository repository, Iterable<Commit> commits);
     Iterable<Commit> getCommitsBetween(final Repository repository, final RefChange refChange);
 }

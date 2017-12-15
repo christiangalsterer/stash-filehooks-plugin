@@ -53,6 +53,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
 
         Map<RefChange, Iterable<Commit>> commitsByRefChange = new HashMap<>();
+        Map<Commit, Iterable<Change>> changesByCommit = new HashMap<>();
 
         Map<Long, Collection<String>> pathAndSizes = new HashMap<>();
 
@@ -98,19 +99,36 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             hookResponse.out().format("Unique commits: %d: %d ms\n",
                     commits.size(), Duration.between(start, Instant.now()).toMillis());
 
-            Iterable<String> filteredPaths = StreamSupport.stream(getChanges(repository, commits).spliterator(), false)
-                    .filter(p -> p.right() > maxFileSize)
-                    .filter(p -> p.left().getPath().toString().matches(includePattern.pattern()))
-                    .map(p -> p.left().getPath().toString())
+            Set<Commit> commitsToCheck = commits.stream()
+                    .filter(commit -> !changesByCommit.containsKey(commit))
+                    .collect(Collectors.toSet());
+
+            if (!commitsToCheck.isEmpty()) {
+                changesByCommit.putAll(changesetService.getChanges(repository, commitsToCheck));
+            }
+
+            List<Change> filteredChanges = commits.stream()
+                    .flatMap(commit -> StreamSupport.stream(changesByCommit.get(commit).spliterator(), false))
+                    .filter(isNotDeleteChange)
+                    .filter(change -> {
+                        String fullPath = change.getPath().toString();
+                        return includePattern.matcher(fullPath).matches()
+                                && (!setting.getExcludePattern().isPresent()
+                                || !setting.getExcludePattern().get().matcher(fullPath).matches());
+                    })
                     .collect(Collectors.toList());
 
-            hookResponse.out().format("Filtered paths: %d ms\n",
-                    Duration.between(start, Instant.now()).toMillis());
+            hookResponse.out().format("Filtered changes: %d: %d ms\n",
+                    filteredChanges.size(), Duration.between(start, Instant.now()).toMillis());
 
-            if (setting.getExcludePattern().isPresent())
-                filteredPaths = StreamSupport.stream(filteredPaths.spliterator(), false)
-                        .filter(setting.getExcludePattern().get().asPredicate().negate())
-                        .collect(Collectors.toList());
+            List<String> filteredPaths =
+                    StreamSupport.stream(zipWithSize(repository, filteredChanges).spliterator(), false)
+                            .filter(p -> p.right() > maxFileSize)
+                            .map(p -> p.left().getPath().toString())
+                            .collect(Collectors.toList());
+
+            hookResponse.out().format("Filtered paths %d: %d ms\n",
+                    filteredPaths.size(), Duration.between(start, Instant.now()).toMillis());
 
             addAll(violatingPaths, filteredPaths);
 
@@ -159,13 +177,6 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
         }
 
         return configurations;
-    }
-
-    private Iterable<Pair<Change, Long>> getChanges(Repository repository, Iterable<Commit> commits) {
-        List<Change> changes = StreamSupport.stream(changesetService.getChanges(repository, commits).spliterator(), false)
-                .filter(isNotDeleteChange)
-                .collect(Collectors.toList());
-        return zipWithSize(repository, changes);
     }
 
     private Iterable<Pair<Change, Long>> zipWithSize(Repository repository, Iterable<Change> changes) {
