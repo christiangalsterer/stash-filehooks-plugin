@@ -12,6 +12,7 @@ import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
 import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.fugue.Pair;
+import com.google.common.collect.Iterables;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
@@ -108,7 +109,13 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             }
 
             List<Change> filteredChanges = commits.stream()
-                    .flatMap(commit -> StreamSupport.stream(changesByCommit.get(commit).spliterator(), false))
+                    .flatMap(commit -> {
+                        Iterable<Change> changes = changesByCommit.get(commit);
+                        hookResponse.out().format("Commit %s, changes %d: %d ms\n",
+                                commit.getId(), Iterables.size(changes),
+                                Duration.between(start, Instant.now()).toMillis());
+                        return StreamSupport.stream(changes.spliterator(), false);
+                    })
                     .filter(isNotDeleteChange)
                     .filter(change -> {
                         String fullPath = change.getPath().toString();
