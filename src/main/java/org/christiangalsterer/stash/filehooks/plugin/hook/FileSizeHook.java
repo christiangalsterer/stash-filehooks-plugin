@@ -119,9 +119,9 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                     .filter(isNotDeleteChange)
                     .filter(change -> {
                         String fullPath = change.getPath().toString();
-                        return includePattern.matcher(fullPath).matches()
+                        return includePattern.matcher(fullPath).find()
                                 && (!setting.getExcludePattern().isPresent()
-                                || !setting.getExcludePattern().get().matcher(fullPath).matches());
+                                || !setting.getExcludePattern().get().matcher(fullPath).find());
                     })
                     .collect(Collectors.toList());
 
