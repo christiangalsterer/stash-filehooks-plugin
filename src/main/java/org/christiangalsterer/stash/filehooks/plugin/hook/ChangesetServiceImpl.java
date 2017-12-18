@@ -1,28 +1,33 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.bitbucket.commit.*;
+import com.atlassian.bitbucket.commit.AbstractCommitCallback;
+import com.atlassian.bitbucket.commit.Changeset;
+import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.util.PageRequestImpl;
+import com.atlassian.bitbucket.scm.ChangesetsCommandParameters;
+import com.atlassian.bitbucket.scm.CommitsCommandParameters;
+import com.atlassian.bitbucket.scm.ScmService;
+import com.atlassian.bitbucket.util.PageRequest;
+import com.atlassian.bitbucket.util.PageUtils;
 import com.atlassian.bitbucket.util.PagedIterable;
 import com.google.common.collect.Iterables;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class ChangesetServiceImpl implements ChangesetService {
 
-    private static final PageRequestImpl PAGE_REQUEST = new PageRequestImpl(0, 100);
-    private static final int MAX_CHANGES_PER_COMMIT = 100;
+    private static final PageRequest PAGE_REQUEST = PageUtils.newRequest(0, PageRequest.MAX_PAGE_LIMIT);
+    private static final int MAX_CHANGES_PER_COMMIT = PageRequest.MAX_PAGE_LIMIT;
 
-    private final CommitService commitService;
+    private final ScmService scmService;
 
-    public ChangesetServiceImpl(CommitService commitService) {
-        this.commitService = commitService;
+    public ChangesetServiceImpl(ScmService scmService) {
+        this.scmService = scmService;
     }
 
     @Override
@@ -54,17 +59,18 @@ public class ChangesetServiceImpl implements ChangesetService {
     @Override
     public Iterable<Commit> getCommitsBetween(final Repository repository, final RefChange refChange) {
         List<Commit> commits = new LinkedList<>();
-        CommitsBetweenRequest request = new CommitsBetweenRequest.Builder(repository)
+        CommitsCommandParameters parameters = new CommitsCommandParameters.Builder()
                 .exclude(refChange.getFromHash())
                 .include(refChange.getToHash())
+                .withMessages(false)
                 .build();
-        commitService.streamCommitsBetween(request, new AbstractCommitCallback() {
+        scmService.getCommandFactory(repository).commits(parameters, new AbstractCommitCallback() {
             @Override
-            public boolean onCommit(@Nonnull Commit commit) throws IOException {
+            public boolean onCommit(@Nonnull Commit commit) {
                 commits.add(commit);
                 return true;
             }
-        });
+        }).call();
         return commits;
     }
 
@@ -72,9 +78,12 @@ public class ChangesetServiceImpl implements ChangesetService {
         final Collection<String> commitIds = StreamSupport.stream(commits.spliterator(), false)
                 .map(Commit::getId)
                 .collect(Collectors.toSet());
-        return new PagedIterable<>(pageRequest -> commitService.getChangesets(new ChangesetsRequest.Builder(repository)
-                .commitIds(commitIds)
-                .maxChangesPerCommit(MAX_CHANGES_PER_COMMIT)
-                .build(), pageRequest), PAGE_REQUEST);
+        return new PagedIterable<>(pageRequest -> scmService.getCommandFactory(repository).changesets(
+                new ChangesetsCommandParameters.Builder()
+                        .commitIds(commitIds)
+                        .maxChangesPerCommit(MAX_CHANGES_PER_COMMIT)
+                        .maxMessageLength(0)
+                        .build(),
+                pageRequest).call(), PAGE_REQUEST);
     }
 }
