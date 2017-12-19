@@ -11,8 +11,6 @@ import com.atlassian.bitbucket.scm.Command;
 import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
 import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.setting.Settings;
-import com.atlassian.fugue.Pair;
-import com.google.common.collect.Iterables;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
@@ -21,7 +19,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static com.google.common.collect.Iterables.addAll;
 import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.*;
@@ -53,8 +50,9 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
         Repository repository = context.getRepository();
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
 
-        Map<RefChange, Iterable<Commit>> commitsByRefChange = new HashMap<>();
-        Map<Commit, Iterable<Change>> changesByCommit = new HashMap<>();
+        FlatteningCachingResolver<RefChange, Commit> commitsByRefChange = new FlatteningCachingResolver<>();
+        FlatteningCachingResolver<Commit, Change> changesByCommit = new FlatteningCachingResolver<>();
+        CachingResolver<String, Long> sizesByContentId = new CachingResolver<>();
 
         Map<Long, Collection<String>> pathAndSizes = new HashMap<>();
 
@@ -79,60 +77,35 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             hookResponse.out().format("Filtered changes: %d ms\n",
                     Duration.between(start, Instant.now()).toMillis());
 
-            Set<Commit> commits = filteredRefChanges.flatMap(refChange -> {
-                        hookResponse.out().format("Getting %s: %d ms\n", refChange.getRef().getId(),
-                                Duration.between(start, Instant.now()).toMillis());
-                        return StreamSupport.stream(
-                                commitsByRefChange.computeIfAbsent(
-                                        refChange,
-                                        x -> {
-                                            hookResponse.out().format("Getting commits: %d ms\n",
-                                                    Duration.between(start, Instant.now()).toMillis());
-                                            Iterable<Commit> refCommits = changesetService.getCommitsBetween(repository, x);
-                                            hookResponse.out().format("Got commits: %d ms\n",
-                                                    Duration.between(start, Instant.now()).toMillis());
-                                            return refCommits;
-                                        }
-                                ).spliterator(), false);
-                    }
-            ).collect(Collectors.toSet());
+            Set<Commit> commits = commitsByRefChange.flatResolve(filteredRefChanges.collect(Collectors.toList()),
+                    refChange -> changesetService.getCommitsBetween(repository, refChange));
 
             hookResponse.out().format("Unique commits: %d: %d ms\n",
                     commits.size(), Duration.between(start, Instant.now()).toMillis());
 
-            Set<Commit> commitsToCheck = commits.stream()
-                    .filter(commit -> !changesByCommit.containsKey(commit))
-                    .collect(Collectors.toSet());
-
-            if (!commitsToCheck.isEmpty()) {
-                changesByCommit.putAll(changesetService.getChanges(repository, commitsToCheck));
-            }
-
-            List<Change> filteredChanges = commits.stream()
-                    .flatMap(commit -> {
-                        Iterable<Change> changes = changesByCommit.get(commit);
-                        hookResponse.out().format("Commit %s, changes %d: %d ms\n",
-                                commit.getId(), Iterables.size(changes),
-                                Duration.between(start, Instant.now()).toMillis());
-                        return StreamSupport.stream(changes.spliterator(), false);
-                    })
-                    .filter(isNotDeleteChange)
-                    .filter(change -> {
-                        String fullPath = change.getPath().toString();
-                        return includePattern.matcher(fullPath).find()
-                                && (!setting.getExcludePattern().isPresent()
-                                || !setting.getExcludePattern().get().matcher(fullPath).find());
-                    })
-                    .collect(Collectors.toList());
+            Set<Change> filteredChanges =
+                    changesByCommit.flatBatchResolve(commits, x -> changesetService.getChanges(repository, x)).stream()
+                            .filter(isNotDeleteChange)
+                            .filter(change -> {
+                                String fullPath = change.getPath().toString();
+                                return includePattern.matcher(fullPath).find()
+                                        && (!setting.getExcludePattern().isPresent()
+                                        || !setting.getExcludePattern().get().matcher(fullPath).find());
+                            })
+                            .collect(Collectors.toSet());
 
             hookResponse.out().format("Filtered changes: %d: %d ms\n",
                     filteredChanges.size(), Duration.between(start, Instant.now()).toMillis());
 
-            List<String> filteredPaths =
-                    StreamSupport.stream(zipWithSize(repository, filteredChanges).spliterator(), false)
-                            .filter(p -> p.right() > maxFileSize)
-                            .map(p -> p.left().getPath().toString())
-                            .collect(Collectors.toList());
+            // Pre-populate cache by resolving all required changes at once
+            sizesByContentId.batchResolve(
+                    filteredChanges.stream().map(Change::getContentId).collect(Collectors.toSet()),
+                    contentIds -> getSizeForContentIds(repository, contentIds));
+
+            List<String> filteredPaths = filteredChanges.stream()
+                    .filter(change -> sizesByContentId.resolve(change.getContentId()) > maxFileSize)
+                    .map(change -> change.getPath().toString())
+                    .collect(Collectors.toList());
 
             hookResponse.out().format("Filtered paths %d: %d ms\n",
                     filteredPaths.size(), Duration.between(start, Instant.now()).toMillis());
@@ -186,18 +159,13 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
         return configurations;
     }
 
-    private Iterable<Pair<Change, Long>> zipWithSize(Repository repository, Iterable<Change> changes) {
-        Map<String, List<Change>> contentIdsToChanges = new HashMap<>();
-        for (Change change : changes) {
-            contentIdsToChanges.computeIfAbsent(change.getContentId(), c -> new ArrayList<>()).add(change);
-        }
-
-        CatFileBatchCheckHandler handler = new CatFileBatchCheckHandler(contentIdsToChanges.keySet());
-        Command<List<Pair<String, Long>>> cmd = commandFactory.builder(repository).command("cat-file").argument("--batch-check").inputHandler(handler).build(handler);
-
-        return cmd.call().stream()
-                .map(p -> Pair.pair(contentIdsToChanges.get(p.left()), p.right()))
-                .flatMap(i -> i.left().stream().map(c -> Pair.pair(c, i.right())))
-                .collect(Collectors.toList());
+    private Map<String, Long> getSizeForContentIds(final Repository repository, Iterable<String> contentIds) {
+        CatFileBatchCheckHandler handler = new CatFileBatchCheckHandler(contentIds);
+        Command<Map<String, Long>> cmd = commandFactory.builder(repository)
+                .command("cat-file")
+                .argument("--batch-check")
+                .inputHandler(handler)
+                .build(handler);
+        return cmd.call();
     }
 }
