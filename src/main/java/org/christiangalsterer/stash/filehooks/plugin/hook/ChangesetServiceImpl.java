@@ -5,6 +5,7 @@ import com.atlassian.bitbucket.commit.Changeset;
 import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
 import com.atlassian.bitbucket.repository.RefChange;
+import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.scm.ChangesetsCommandParameters;
 import com.atlassian.bitbucket.scm.CommitsCommandParameters;
@@ -59,16 +60,18 @@ public class ChangesetServiceImpl implements ChangesetService {
     @Override
     public Iterable<Commit> getCommitsBetween(final Repository repository, final RefChange refChange) {
         List<Commit> commits = new LinkedList<>();
-        CommitsCommandParameters parameters = new CommitsCommandParameters.Builder()
-                .exclude(refChange.getFromHash())
+        CommitsCommandParameters.Builder parameters = new CommitsCommandParameters.Builder()
                 .include(refChange.getToHash())
-                .withMessages(false)
-                .build();
-        scmService.getCommandFactory(repository).commits(parameters, new AbstractCommitCallback() {
+                .withMessages(false);
+
+        if (refChange.getType() == RefChangeType.UPDATE) {
+            parameters = parameters.exclude(refChange.getFromHash());
+        }
+
+        scmService.getCommandFactory(repository).commits(parameters.build(), new AbstractCommitCallback() {
             @Override
             public boolean onCommit(@Nonnull Commit commit) {
-                commits.add(commit);
-                return true;
+                return commits.add(commit);
             }
         }).call();
         return commits;
