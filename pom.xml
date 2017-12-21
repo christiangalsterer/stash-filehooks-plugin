@@ -25,7 +25,9 @@
     <packaging>atlassian-plugin</packaging>
 
     <properties>
-        <bitbucket.version>4.8.0</bitbucket.version>
+        <bitbucket.4x.version>4.8.0</bitbucket.4x.version>
+        <bitbucket.5x.version>5.4.1</bitbucket.5x.version>
+        <bitbucket.version>${bitbucket.4x.version}</bitbucket.version>
         <bitbucket.data.version>${bitbucket.version}</bitbucket.data.version>
         <amps.version>6.3.0</amps.version>
         <plugin.testrunner.version>1.2.3</plugin.testrunner.version>
@@ -129,6 +131,18 @@
                             <instanceId>bitbucket</instanceId>
                             <version>${bitbucket.version}</version>
                             <dataVersion>${bitbucket.data.version}</dataVersion>
+                        </product>
+                        <product>
+                            <id>bitbucket</id>
+                            <instanceId>bitbucket-4x</instanceId>
+                            <version>${bitbucket.4x.version}</version>
+                            <dataVersion>${bitbucket.4x.version}</dataVersion>
+                        </product>
+                        <product>
+                            <id>bitbucket</id>
+                            <instanceId>bitbucket-5x</instanceId>
+                            <version>${bitbucket.5x.version}</version>
+                            <dataVersion>${bitbucket.5x.version}</dataVersion>
                         </product>
                     </products>
                 </configuration>
