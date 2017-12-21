@@ -11,11 +11,8 @@ import com.atlassian.bitbucket.scm.Command;
 import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
 import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.setting.Settings;
-import com.google.common.collect.Iterables;
 
 import javax.annotation.Nonnull;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -45,9 +42,6 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
 
     @Override
     public boolean onReceive(@Nonnull RepositoryHookContext context, @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
-        Instant start = Instant.now();
-        hookResponse.out().format("Hook start: %s\n", start);
-
         Repository repository = context.getRepository();
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
 
@@ -62,9 +56,6 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             Long maxFileSize = setting.getSize();
             Optional<Pattern> branchesPattern = setting.getBranchesPattern();
 
-            hookResponse.out().format("Setting [%s]: %d ms\n", includePattern,
-                    Duration.between(start, Instant.now()).toMillis());
-
             Stream<RefChange> filteredRefChanges = refChanges.stream()
                     .filter(isNotTagRefChange);
 
@@ -73,21 +64,11 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                         .filter(matchesBranchPattern(branchesPattern.get()));
             }
 
-            hookResponse.out().format("Filtered changes: %d ms\n",
-                    Duration.between(start, Instant.now()).toMillis());
-
             Set<Commit> commits =
                     changesetService.getCommitsBetween(repository, filteredRefChanges.collect(Collectors.toSet()));
 
-            hookResponse.out().format("Unique commits: %d: %d ms\n",
-                    commits.size(), Duration.between(start, Instant.now()).toMillis());
-
             Set<Change> filteredChanges =
-                    changesByCommit.flatBatchResolve(commits, x -> {
-                        hookResponse.out().format("Requesting changes for %d commits: %d ms\n",
-                                Iterables.size(x), Duration.between(start, Instant.now()).toMillis());
-                        return changesetService.getChanges(repository, x);
-                    }).stream()
+                    changesByCommit.flatBatchResolve(commits, x -> changesetService.getChanges(repository, x)).stream()
                             .filter(isNotDeleteChange)
                             .filter(change -> {
                                 String fullPath = change.getPath().toString();
@@ -96,9 +77,6 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                                         || !setting.getExcludePattern().get().matcher(fullPath).find());
                             })
                             .collect(Collectors.toSet());
-
-            hookResponse.out().format("Filtered changes: %d: %d ms\n",
-                    filteredChanges.size(), Duration.between(start, Instant.now()).toMillis());
 
             // Pre-populate cache by resolving all required changes at once
             sizesByContentId.batchResolve(
@@ -109,9 +87,6 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                     .filter(change -> sizesByContentId.resolve(change.getContentId()) > maxFileSize)
                     .map(change -> change.getPath().toString())
                     .collect(Collectors.toList());
-
-            hookResponse.out().format("Filtered paths %d: %d ms\n",
-                    filteredPaths.size(), Duration.between(start, Instant.now()).toMillis());
 
             addAll(violatingPaths, filteredPaths);
 
@@ -134,10 +109,6 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                 hookResponse.out().println("=================================");
             }
         }
-
-        Instant finish = Instant.now();
-        hookResponse.out().format("Hook finish: %s\n", finish);
-        hookResponse.out().format("Elapsed: %d ms\n", Duration.between(start, finish).toMillis());
 
         return hookPassed;
     }
