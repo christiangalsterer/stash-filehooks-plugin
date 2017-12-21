@@ -5,7 +5,6 @@ import com.atlassian.bitbucket.commit.Changeset;
 import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
 import com.atlassian.bitbucket.repository.RefChange;
-import com.atlassian.bitbucket.repository.RefChangeType;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.scm.ChangesetsCommandParameters;
 import com.atlassian.bitbucket.scm.CommitsCommandParameters;
@@ -35,11 +34,9 @@ public class ChangesetServiceImpl implements ChangesetService {
     public Iterable<Change> getChanges(Iterable<RefChange> refChanges, final Repository repository) {
         List<Change> changes = new ArrayList<>();
 
-        for (RefChange refChange : refChanges) {
-            Iterable<Commit> commits = getCommitsBetween(repository, refChange);
-            for (Iterable<Change> values : getChanges(repository, commits).values()) {
-                Iterables.addAll(changes, values);
-            }
+        Iterable<Commit> commits = getCommitsBetween(repository, refChanges);
+        for (Iterable<Change> values : getChanges(repository, commits).values()) {
+            Iterables.addAll(changes, values);
         }
 
         return changes;
@@ -58,22 +55,36 @@ public class ChangesetServiceImpl implements ChangesetService {
     }
 
     @Override
-    public Iterable<Commit> getCommitsBetween(final Repository repository, final RefChange refChange) {
-        List<Commit> commits = new LinkedList<>();
-        CommitsCommandParameters.Builder parameters = new CommitsCommandParameters.Builder()
-                .include(refChange.getToHash())
-                .withMessages(false);
+    public Set<Commit> getCommitsBetween(final Repository repository, Iterable<RefChange> refChanges) {
+        Set<Commit> commits = new HashSet<>();
+        CommitsCommandParameters.Builder builder = new CommitsCommandParameters.Builder().withMessages(false);
 
-        if (refChange.getType() == RefChangeType.UPDATE) {
-            parameters = parameters.exclude(refChange.getFromHash());
+        for (RefChange refChange : refChanges) {
+            switch (refChange.getType()) {
+                case UPDATE:
+                    builder = builder.include(refChange.getToHash());
+                    builder = builder.exclude(refChange.getFromHash());
+                    break;
+                case ADD:
+                    builder = builder.include(refChange.getToHash());
+                    break;
+                case DELETE:
+                    // Deleting branch means that its commits were already in repository,
+                    // excluding them may reduce amount of commits to inspect if other ref changes exist.
+                    builder = builder.exclude(refChange.getFromHash());
+                    break;
+            }
         }
 
-        scmService.getCommandFactory(repository).commits(parameters.build(), new AbstractCommitCallback() {
-            @Override
-            public boolean onCommit(@Nonnull Commit commit) {
-                return commits.add(commit);
-            }
-        }).call();
+        CommitsCommandParameters parameters = builder.build();
+        if (parameters.hasIncludes()) {
+            scmService.getCommandFactory(repository).commits(parameters, new AbstractCommitCallback() {
+                @Override
+                public boolean onCommit(@Nonnull Commit commit) {
+                    return commits.add(commit);
+                }
+            }).call();
+        }
         return commits;
     }
 

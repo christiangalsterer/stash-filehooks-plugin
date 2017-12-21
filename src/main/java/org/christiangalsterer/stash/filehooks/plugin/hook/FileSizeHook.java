@@ -11,6 +11,7 @@ import com.atlassian.bitbucket.scm.Command;
 import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
 import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.setting.Settings;
+import com.google.common.collect.Iterables;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
@@ -50,7 +51,6 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
         Repository repository = context.getRepository();
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
 
-        FlatteningCachingResolver<RefChange, Commit> commitsByRefChange = new FlatteningCachingResolver<>();
         FlatteningCachingResolver<Commit, Change> changesByCommit = new FlatteningCachingResolver<>();
         CachingResolver<String, Long> sizesByContentId = new CachingResolver<>();
 
@@ -66,7 +66,6 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                     Duration.between(start, Instant.now()).toMillis());
 
             Stream<RefChange> filteredRefChanges = refChanges.stream()
-                    .filter(isNotDeleteRefChange)
                     .filter(isNotTagRefChange);
 
             if (branchesPattern.isPresent()) {
@@ -77,14 +76,18 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             hookResponse.out().format("Filtered changes: %d ms\n",
                     Duration.between(start, Instant.now()).toMillis());
 
-            Set<Commit> commits = commitsByRefChange.flatResolve(filteredRefChanges.collect(Collectors.toList()),
-                    refChange -> changesetService.getCommitsBetween(repository, refChange));
+            Set<Commit> commits =
+                    changesetService.getCommitsBetween(repository, filteredRefChanges.collect(Collectors.toSet()));
 
             hookResponse.out().format("Unique commits: %d: %d ms\n",
                     commits.size(), Duration.between(start, Instant.now()).toMillis());
 
             Set<Change> filteredChanges =
-                    changesByCommit.flatBatchResolve(commits, x -> changesetService.getChanges(repository, x)).stream()
+                    changesByCommit.flatBatchResolve(commits, x -> {
+                        hookResponse.out().format("Requesting changes for %d commits: %d ms\n",
+                                Iterables.size(x), Duration.between(start, Instant.now()).toMillis());
+                        return changesetService.getChanges(repository, x);
+                    }).stream()
                             .filter(isNotDeleteChange)
                             .filter(change -> {
                                 String fullPath = change.getPath().toString();
