@@ -1,72 +1,109 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.bitbucket.commit.*;
+import com.atlassian.bitbucket.commit.Changeset;
+import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
+import com.atlassian.bitbucket.repository.Ref;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.util.*;
-import com.google.common.collect.ImmutableSet;
+import com.atlassian.bitbucket.scm.ChangesetsCommandParameters;
+import com.atlassian.bitbucket.scm.CommitsCommandParameters;
+import com.atlassian.bitbucket.scm.ScmService;
+import com.atlassian.bitbucket.util.PageRequest;
+import com.atlassian.bitbucket.util.PageUtils;
+import com.atlassian.bitbucket.util.PagedIterable;
 import com.google.common.collect.Iterables;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class ChangesetServiceImpl implements ChangesetService {
 
-    private static final PageRequestImpl PAGE_REQUEST = new PageRequestImpl(0, 100);
-    private static final int MAX_CHANGES_PER_COMMIT = 100;
+    private static final PageRequest PAGE_REQUEST = PageUtils.newRequest(0, PageRequest.MAX_PAGE_LIMIT);
+    private static final int MAX_CHANGES_PER_COMMIT = PageRequest.MAX_PAGE_LIMIT;
 
-    private final CommitService commitService;
+    private final ScmService scmService;
 
-    public ChangesetServiceImpl(CommitService commitService) {
-        this.commitService = commitService;
+    public ChangesetServiceImpl(ScmService scmService) {
+        this.scmService = scmService;
     }
 
     @Override
     public Iterable<Change> getChanges(Iterable<RefChange> refChanges, final Repository repository) {
         List<Change> changes = new ArrayList<>();
 
-        for (RefChange refChange : refChanges) {
-            Iterable<String> commitIds = StreamSupport.stream(getCommitsBetween(repository, refChange).spliterator(),false).map(Functions.COMMIT_TO_COMMIT_ID).collect(Collectors.toList());
-            if (Iterables.size(commitIds) == 0) {
-                return Collections.emptySet();
-            }
-
-            Iterable<Changeset> changesets = getChangesets(repository, commitIds);
-            for (Changeset changeset : changesets) {
-                Iterable<Change> values = changeset.getChanges().getValues();
-                for (Change change : values) {
-                    changes.add(change);
-                }
-            }
+        Iterable<Commit> commits = getCommitsBetween(repository, refChanges);
+        for (Iterable<Change> values : getChanges(repository, commits).values()) {
+            Iterables.addAll(changes, values);
         }
 
         return changes;
     }
 
-    private Iterable<Commit> getCommitsBetween(final Repository repository, final RefChange refChange) {
-        return new PagedIterable<>(pageRequest -> {
-            if (refChange.getFromHash().equals("0000000000000000000000000000000000000000")) {
-                return commitService.getCommitsBetween(new CommitsBetweenRequest.Builder(repository)
-                                                       .include(refChange.getToHash())
-                                                       .build(), pageRequest);
-            }
-            return commitService.getCommitsBetween(new CommitsBetweenRequest.Builder(repository)
-                    .exclude(refChange.getFromHash())
-                    .include(refChange.getToHash())
-                    .build(), pageRequest);
-        }, PAGE_REQUEST);
+    @Override
+    public Map<Commit, Iterable<Change>> getChanges(final Repository repository, Iterable<Commit> commits) {
+        Map<Commit, Iterable<Change>> changesByCommit = new HashMap<>();
+
+        Iterable<Changeset> changesets = getChangesets(repository, commits);
+        for (Changeset changeset : changesets) {
+            changesByCommit.put(changeset.getToCommit(), changeset.getChanges().getValues());
+        }
+
+        return changesByCommit;
     }
 
-    private Iterable<Changeset> getChangesets(final Repository repository, Iterable<String> commitIds) {
-        final Collection<String> cids = ImmutableSet.copyOf(commitIds);
-        return new PagedIterable<>(pageRequest -> commitService.getChangesets(new ChangesetsRequest.Builder(repository)
-                .commitIds(cids)
-                .maxChangesPerCommit(MAX_CHANGES_PER_COMMIT)
-                .build(), pageRequest), PAGE_REQUEST);
+    @Override
+    public Set<Commit> getCommitsBetween(final Repository repository, Iterable<RefChange> refChanges) {
+        Set<Commit> commits = new HashSet<>();
+        CommitsCommandParameters.Builder builder = new CommitsCommandParameters.Builder().withMessages(false);
+
+        for (RefChange refChange : refChanges) {
+            switch (refChange.getType()) {
+                case UPDATE:
+                    builder = builder.include(refChange.getToHash());
+                    builder = builder.exclude(refChange.getFromHash());
+                    break;
+                case ADD:
+                    builder = builder.include(refChange.getToHash());
+                    break;
+                case DELETE:
+                    // Deleting branch means that its commits were already in repository,
+                    // excluding them may reduce amount of commits to inspect if other ref changes exist.
+                    builder = builder.exclude(refChange.getFromHash());
+                    break;
+            }
+        }
+
+        Set<String> existingHeads = getExistingRefs(repository).stream()
+                .map(Ref::getLatestCommit)
+                .collect(Collectors.toSet());
+
+        builder = builder.exclude(existingHeads);
+
+        CommitsCommandParameters parameters = builder.build();
+        if (parameters.hasIncludes()) {
+            scmService.getCommandFactory(repository).commits(parameters, commits::add).call();
+        }
+        return commits;
+    }
+
+    private Set<Ref> getExistingRefs(final Repository repository) {
+        Set<Ref> refs = new HashSet<>();
+        scmService.getCommandFactory(repository).heads(refs::add).call();
+        return refs;
+    }
+
+    private Iterable<Changeset> getChangesets(final Repository repository, Iterable<Commit> commits) {
+        final Collection<String> commitIds = StreamSupport.stream(commits.spliterator(), false)
+                .map(Commit::getId)
+                .collect(Collectors.toSet());
+        return new PagedIterable<>(pageRequest -> scmService.getCommandFactory(repository).changesets(
+                new ChangesetsCommandParameters.Builder()
+                        .commitIds(commitIds)
+                        .maxChangesPerCommit(MAX_CHANGES_PER_COMMIT)
+                        .maxMessageLength(0)
+                        .build(),
+                pageRequest).call(), PAGE_REQUEST);
     }
 }
