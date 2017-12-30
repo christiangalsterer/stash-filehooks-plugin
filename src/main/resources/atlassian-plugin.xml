@@ -19,16 +19,18 @@
 
   <resource type="i18n" name="i18n" location="org.christiangalsterer.stash-filehooks-plugin"/>
   <web-resource key="filehooks-css">
-    <!--
-    <transformation extension="js">
-      <transformer key="jsI18n"/>
-    </transformation>
-    -->
     <transformation extension="less">
         <transformer key="less-transformer" />
     </transformation>
     <resource type="download" name="hooks.css" location="/less/hooks.less" />
     <context>bitbucket.page.repository.settings.hooks</context>
+  </web-resource>
+  <web-resource key="filehooks-css2">
+    <transformation extension="less">
+      <transformer key="less-transformer" />
+    </transformation>
+    <resource type="download" name="hooks.css" location="/less/hooks.less" />
+    <context>bitbucket.page.settings.hooks</context>
   </web-resource>
   <repository-hook key="filesize-hook" name="File Size Hook" i18n-name-key="filesize-hook.name" class="org.christiangalsterer.stash.filehooks.plugin.hook.FileSizeHook">
     <description key="filesize-hook.description">Reject commits that contain files larger a configured file size limit.</description>

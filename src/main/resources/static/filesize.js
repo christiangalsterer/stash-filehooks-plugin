@@ -2,11 +2,11 @@
 
         function removeConfig (element) {
             var $container = $('.filesize-hooks');
-            $(element).parent().remove();
+            $(element).parents('.filesize-config-group').remove();
 
-            var $visibleElements = $container.find('.filesize-hook');
+            var $visibleElements = $container.find('.filesize-config-group');
             if ($visibleElements.length == 1) {
-                $visibleElements.children(".delete-button").addClass('filesize-hook-hidden');
+                $visibleElements.find(".filesize-hook-delete").addClass('filesize-hook-hidden');
             }
 
             $visibleElements.each(function(index, visibleElement) {
@@ -19,12 +19,13 @@
                 $currentElement.find('.filesize-hook-size').find('label').attr('for', 'size-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-size').find('input').attr('id', 'size-' + $configElementIndex)
                     .attr('name', 'size-' + $configElementIndex);
-                $currentElement.find('.filesize-hook-excludePattern').find('label').attr('for', 'pattern-exclude-' + $configElementIndex);
-                $currentElement.find('.filesize-hook-excludePattern').find('input').attr('id', 'pattern-exclude-' + $configElementIndex)
+                $currentElement.find('.filesize-hook-exclude-pattern').find('label').attr('for', 'pattern-exclude-' + $configElementIndex);
+                $currentElement.find('.filesize-hook-exclude-pattern').find('input').attr('id', 'pattern-exclude-' + $configElementIndex)
                     .attr('name', 'pattern-exclude-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-branches-pattern').find('label').attr('for', 'pattern-branches-' + $configElementIndex);
                 $currentElement.find('.filesize-hook-branches-pattern').find('input').attr('id', 'pattern-branches-' + $configElementIndex)
                     .attr('name', 'pattern-branches-' + $configElementIndex);
+                $currentElement.find('.filesize-hook-delete').attr('id', 'remove-button-' + $configElementIndex);
             });
 
             var $controlAdd = $container.find('#filesize-hook-add');
@@ -35,7 +36,7 @@
             var $maxInputs = parseInt($(element).attr('data-max-inputs'));
             var $container = $('.filesize-hooks');
             var $controlAdd = $container.find('#filesize-hook-add');
-            var $existingInputs = $container.children('.filesize-hook');
+            var $existingInputs = $container.children('.filesize-config-group');
 
             var html = stash.filehooks.size.anotherConfig({
                 'canDelete' : true,
@@ -44,7 +45,7 @@
             $(html).insertBefore($controlAdd.parent());
 
             $controlAdd.toggleClass('filesize-hook-hidden', $existingInputs.length + 1 === $maxInputs);
-            $container.find('.delete-button').removeClass('filesize-hook-hidden');
+            $container.find('.filesize-hook-delete').removeClass('filesize-hook-hidden');
         };
 
         $(document).on('click', '.filesize-hook-add', function(e) {

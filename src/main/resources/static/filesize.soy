@@ -26,13 +26,18 @@
           {/call}
         {/for}
 
-        <div class="field-group filesize-hook-add-config" >
-            <div class="{$visibleInputsCount == $maxCount ? 'filesize-hook-hidden' : '' }" id="filesize-hook-add">
-                <a class="filesize-hook-add" href="#" data-max-inputs="{$maxCount}">
-                {getText('filesize-hook.add.config.description')}
-                </a>
-            </div>
-        </div>
+        {call aui.buttons.buttons}
+            {param content}
+                {call aui.buttons.button}
+                    {param id: 'filesize-hook-add' /}
+                    {param text: getText('filesize-hook.add.config.description') /}
+                    {param isDisabled: $visibleInputsCount == $maxCount /}
+                    {param extraClasses: $visibleInputsCount == $maxCount ? 'filesize-hook-add filesize-hook-hidden' : 'filesize-hook-add' /}
+                    {param extraAttributes: 'data-max-inputs=' + $maxCount /}
+                {/call}
+            {/param}
+        {/call}
+
      </div>
 
 {/template}
@@ -47,10 +52,10 @@
  * @param? errors
  */
 {template .anotherConfig}
-    <div id="filesizehook-{$count}" class="field-group filesize-hook">
-        <div class="filesize-hook-include-pattern">
+    <fieldset id="filesizehook-{$count}" class="filesize-config-group">
         {call aui.form.textField}
             {param id: 'pattern-' + $count /}
+            {param extraClasses: 'filesize-hook-include-pattern' /}
             {param value: $includePattern ? $includePattern : '' /}
             {param isRequired: true /}
             {param labelContent: 'Include' /}
@@ -59,11 +64,10 @@
             {/param}
             {param errorTexts: $errors ? $errors['pattern-' + $count] : null /}
         {/call}
-        </div>
 
-        <div class="filesize-hook-size">
         {call aui.form.textField}
             {param id: 'size-' + $count /}
+            {param extraClasses: 'filesize-hook-size' /}
             {param value: $size ? $size : '' /}
             {param isRequired: true /}
             {param labelContent: 'Size' /}
@@ -72,11 +76,10 @@
             {/param}
             {param errorTexts: $errors ? $errors['size-' + $count] : null /}
         {/call}
-        </div>
 
-        <div class="filesize-hook-exclude-pattern">
         {call aui.form.textField}
             {param id: 'pattern-exclude-' + $count /}
+            {param extraClasses: 'filesize-hook-exclude-pattern' /}
             {param value: $excludePattern ? $excludePattern : '' /}
             {param isRequired: false /}
             {param labelContent: 'Exclude' /}
@@ -85,11 +88,10 @@
             {/param}
             {param errorTexts: $errors ? $errors['pattern-exclude-' + $count] : null /}
         {/call}
-        </div>
 
-        <div class="filesize-hook-branches-pattern">
         {call aui.form.textField}
             {param id: 'pattern-branches-' + $count /}
+            {param extraClasses: 'filesize-hook-branches-pattern' /}
             {param value: $branchesPattern ? $branchesPattern : '' /}
             {param isRequired: false /}
             {param labelContent: 'Branches' /}
@@ -98,13 +100,16 @@
             {/param}
             {param errorTexts: $errors ? $errors['pattern-branches-' + $count] : null /}
         {/call}
-        </div>
 
-        <div class="filesize-hook-delete {$canDelete ? '' : 'filesize-hook-hidden' }">
-            <a href="#" class="delete-button" title="{getText('filesize-hook.delete.button')}">
-                <span class="aui-icon aui-icon-small aui-iconfont-remove"></span>
-            </a>
-        </div>
-    </div>
+        {call aui.buttons.buttons}
+            {param content}
+                {call aui.buttons.button}
+                    {param id: 'remove-button-' + $count /}
+                    {param text: getText('filesize-hook.delete.button') /}
+                    {param extraClasses: $canDelete ? 'filesize-hook-delete' : 'filesize-hook-delete filesize-hook-hidden' /}
+                {/call}
+            {/param}
+        {/call}
+    </fieldset>
 
 {/template}

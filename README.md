@@ -8,18 +8,29 @@ The plugin is available in the [Atlassian Marketplace](https://marketplace.atlas
 
 # Configuration
 ## File Size Hook
-In order to configure the hook go to your repository and select **Settings** -> **Hooks** -> **File Size Hook**.
+In order to configure the hook on a **project** level go to your project and select **Settings** > **Hooks** -> **File Size Hook**.
+
+In order to configure the hook on a **repository** level go to your repository and select **Settings** > **Hooks** > **File Size Hook**.
 The following example rejects all files larger then 1MB (1048576 bytes).
 
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-filesize-hook-configuration.png)
 
+
 ## File Name Hook
-In order to configure the hook go to your repository and select **Settings** -> **Hooks** -> **File Name Hook**.
+In order to configure the hook on a **project** level go to your project and select **Settings** > **Merge checks** > **File Name Hook**.
+
+In order to configure the hook on a **repostory** level go to your repository and select **Settings** > **Merge checks** > **File Name Hook**.
 The following example rejects all files matching the pattern **readme.md** when the file is pushed or part of a merge request(pull request).
 
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-filename-hook-configuration.png)
 
 # Releases
+
+3.2.0 (2017-12-30)
+
+* Compatibility with Bitbucket Server 5.2.x
+* [Rework of configuration UI](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/36)
+* [Update of documentation for File Name Hook configuration location](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/32)
 
 3.1.0 (2017-11-26)
 
