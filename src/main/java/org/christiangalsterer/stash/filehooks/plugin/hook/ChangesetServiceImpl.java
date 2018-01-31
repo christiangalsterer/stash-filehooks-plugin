@@ -1,9 +1,9 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.bitbucket.commit.AbstractCommitCallback;
 import com.atlassian.bitbucket.commit.Changeset;
 import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
+import com.atlassian.bitbucket.repository.Ref;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.scm.ChangesetsCommandParameters;
@@ -14,7 +14,6 @@ import com.atlassian.bitbucket.util.PageUtils;
 import com.atlassian.bitbucket.util.PagedIterable;
 import com.google.common.collect.Iterables;
 
-import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -76,16 +75,23 @@ public class ChangesetServiceImpl implements ChangesetService {
             }
         }
 
+        Set<String> existingHeads = getExistingRefs(repository).stream()
+                .map(Ref::getLatestCommit)
+                .collect(Collectors.toSet());
+
+        builder = builder.exclude(existingHeads);
+
         CommitsCommandParameters parameters = builder.build();
         if (parameters.hasIncludes()) {
-            scmService.getCommandFactory(repository).commits(parameters, new AbstractCommitCallback() {
-                @Override
-                public boolean onCommit(@Nonnull Commit commit) {
-                    return commits.add(commit);
-                }
-            }).call();
+            scmService.getCommandFactory(repository).commits(parameters, commits::add).call();
         }
         return commits;
+    }
+
+    private Set<Ref> getExistingRefs(final Repository repository) {
+        Set<Ref> refs = new HashSet<>();
+        scmService.getCommandFactory(repository).heads(refs::add).call();
+        return refs;
     }
 
     private Iterable<Changeset> getChangesets(final Repository repository, Iterable<Commit> commits) {
