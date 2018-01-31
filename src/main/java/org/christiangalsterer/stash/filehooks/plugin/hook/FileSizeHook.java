@@ -19,7 +19,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Iterables.addAll;
-import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.*;
+import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.isNotDeleteChange;
+import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.matchesBranchPattern;
 
 /**
  * Checks the size of a file in the pre-receive phase and rejects the push when the changeset contains files which exceed the configured file size limit.
@@ -56,8 +57,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             Long maxFileSize = setting.getSize();
             Optional<Pattern> branchesPattern = setting.getBranchesPattern();
 
-            Stream<RefChange> filteredRefChanges = refChanges.stream()
-                    .filter(isNotTagRefChange);
+            Stream<RefChange> filteredRefChanges = refChanges.stream();
 
             if (branchesPattern.isPresent()) {
                 filteredRefChanges = filteredRefChanges
