@@ -102,6 +102,7 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 ```
    Copyright 2015 Christian Galsterer
+   Copyright (C) 2017 Motorola Solutions, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
