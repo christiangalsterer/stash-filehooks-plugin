@@ -102,11 +102,14 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             Collection<String> paths = pathAndSizes.get(maxFileSize);
             if (paths.size() > 0) {
                 hookPassed = false;
-                hookResponse.out().println("=================================");
+                hookResponse.out().println("=== File Size Hook ===");
+                hookResponse.out().println("");
                 for (String path : paths) {
                     hookResponse.out().println(String.format("File [%s] is too large. Maximum allowed file size is %s bytes.", path, maxFileSize));
                 }
-                hookResponse.out().println("=================================");
+                hookResponse.out().println("");
+                hookResponse.out().println("You may to consider to use Git Large File Storage in Bitbucket, see https://confluence.atlassian.com/bitbucket/git-large-file-storage-in-bitbucket-829078514.html");
+                hookResponse.out().println("======================");
             }
         }
 
