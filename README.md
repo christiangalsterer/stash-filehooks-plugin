@@ -26,6 +26,11 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 # Releases
 
+3.3.0 (2018-02-28)
+
+* [Performance Improvement: New branch creation causes the plugin to iterate over all changesets](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/1), thanks [raspy](https://github.com/raspy) for providing a fix.
+
+
 3.2.0 (2017-12-30)
 
 * Compatibility with Bitbucket Server 5.2.x
@@ -102,6 +107,7 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 ```
    Copyright 2015 Christian Galsterer
+   Copyright 2017 Motorola Solutions, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

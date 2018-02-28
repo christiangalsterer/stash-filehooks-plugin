@@ -1,24 +1,22 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.fugue.Pair;
 import com.atlassian.bitbucket.io.LineReader;
 import com.atlassian.bitbucket.io.LineReaderOutputHandler;
 import com.atlassian.bitbucket.scm.CommandInputHandler;
 import com.atlassian.bitbucket.scm.CommandOutputHandler;
 import com.atlassian.utils.process.IOUtils;
 import com.atlassian.utils.process.ProcessException;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements CommandInputHandler, CommandOutputHandler<List<Pair<String, Long>>> {
+public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements CommandInputHandler, CommandOutputHandler<Map<String, Long>> {
 
 	private final Iterable<String> changesets;
-	private final List<Pair<String, Long>> values = Lists.newArrayList();
+    private final Map<String, Long> values = new HashMap<>();
 
 	CatFileBatchCheckHandler(Iterable<String> changesets) {
 		super(StandardCharsets.UTF_8);
@@ -26,7 +24,7 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	}
 
 	@Override
-	public List<Pair<String, Long>> getOutput() {
+	public Map<String, Long> getOutput() {
 		return values;
 	}
 
@@ -46,7 +44,7 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 			String[] split = line.split(" ");
 			// Only process blobs (ie files), ignore folders
 			if (split.length == 3 && split[1].equals("blob")) {
-				values.add(Pair.pair(split[0], Long.parseLong(split[2])));
+				values.put(split[0], Long.parseLong(split[2]));
 			}
 		}
 	}

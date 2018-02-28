@@ -3,17 +3,29 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.christiangalsterer</groupId>
     <artifactId>stash-filehooks-plugin</artifactId>
-    <version>3.2.0</version>
+    <version>3.3.0-SNAPSHOT</version>
     <organization>
         <name>Christian Galsterer</name>
         <url>https://github.com/christiangalsterer/stash-filehooks-plugin</url>
     </organization>
+    <contributors>
+        <contributor>
+            <name>Krzysztof Malinowski</name>
+            <organization>Motorola Solutions, Inc.</organization>
+        </contributor>
+    </contributors>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
     <name>File Hooks Plugin</name>
     <description>Various hooks to check file attributes, like size, name.</description>
     <packaging>atlassian-plugin</packaging>
 
     <properties>
-        <bitbucket.version>5.2.0</bitbucket.version>
+        <bitbucket.version>5.4.1</bitbucket.version>
         <bitbucket.data.version>${bitbucket.version}</bitbucket.data.version>
         <amps.version>6.3.0</amps.version>
         <plugin.testrunner.version>1.2.3</plugin.testrunner.version>
