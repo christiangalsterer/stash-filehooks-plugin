@@ -26,6 +26,10 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 # Releases
 
+3.3.1 (2018-03-03)
+
+* [Fix: Push fails if chnageset is emoty in case commits don't violate File Name Hook or File Size Hook settings](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/41)
+
 3.3.0 (2018-02-28)
 
 * [Performance Improvement: New branch creation causes the plugin to iterate over all changesets](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/1), thanks [raspy](https://github.com/raspy) for providing a fix.

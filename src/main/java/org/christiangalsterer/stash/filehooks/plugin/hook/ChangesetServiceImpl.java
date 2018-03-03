@@ -95,15 +95,21 @@ public class ChangesetServiceImpl implements ChangesetService {
     }
 
     private Iterable<Changeset> getChangesets(final Repository repository, Iterable<Commit> commits) {
+        Iterable<Changeset> changesets = new ArrayList<>();
+
         final Collection<String> commitIds = StreamSupport.stream(commits.spliterator(), false)
                 .map(Commit::getId)
                 .collect(Collectors.toSet());
-        return new PagedIterable<>(pageRequest -> scmService.getCommandFactory(repository).changesets(
-                new ChangesetsCommandParameters.Builder()
-                        .commitIds(commitIds)
-                        .maxChangesPerCommit(MAX_CHANGES_PER_COMMIT)
-                        .maxMessageLength(0)
-                        .build(),
-                pageRequest).call(), PAGE_REQUEST);
+
+        if (!commitIds.isEmpty()) {
+            changesets = new PagedIterable<>(pageRequest -> scmService.getCommandFactory(repository).changesets(
+                    new ChangesetsCommandParameters.Builder()
+                            .commitIds(commitIds)
+                            .maxChangesPerCommit(MAX_CHANGES_PER_COMMIT)
+                            .maxMessageLength(0)
+                            .build(),
+                    pageRequest).call(), PAGE_REQUEST);
+        }
+        return changesets;
     }
 }
