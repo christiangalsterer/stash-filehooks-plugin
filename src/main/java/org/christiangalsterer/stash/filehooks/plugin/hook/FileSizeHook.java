@@ -143,6 +143,13 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                 .argument("--batch-check")
                 .inputHandler(handler)
                 .build(handler);
-        return cmd.call();
+        return filterOutNullSizes(cmd.call());
+    }
+
+    private Map<String, Long> filterOutNullSizes(Map<String, Long> sizes) {
+        return sizes.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }
