@@ -26,6 +26,10 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 # Releases
 
+3.3.2 (2018-04-15)
+
+* [Fix: FileSize Hook: NullPointerException when size is null](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/43), thanks [lucamilanesio](https://github.com/lucamilanesio) for providing a fix.
+
 3.3.1 (2018-03-03)
 
 * [Fix: Push fails if chnageset is emoty in case commits don't violate File Name Hook or File Size Hook settings](https://github.com/christiangalsterer/stash-filehooks-plugin/issues/41)
