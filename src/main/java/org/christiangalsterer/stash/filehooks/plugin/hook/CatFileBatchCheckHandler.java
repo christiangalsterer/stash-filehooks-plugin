@@ -40,7 +40,7 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	@Override
 	protected void processReader(LineReader reader) throws IOException {
 		String line;
-		while ((line = resetWatchdogAndReadLine(reader)) != null) {
+		while ((line = reader.readLine()) != null) {
 			String[] split = line.split(" ");
 			// Only process blobs (ie files), ignore folders
 			if (split.length == 3 && split[1].equals("blob")) {

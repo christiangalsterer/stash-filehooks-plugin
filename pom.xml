@@ -25,7 +25,7 @@
     <packaging>atlassian-plugin</packaging>
 
     <properties>
-        <bitbucket.version>6.1.0</bitbucket.version>
+        <bitbucket.version>6.2.0</bitbucket.version>
         <bitbucket.data.version>${bitbucket.version}</bitbucket.data.version>
         <amps.version>6.3.0</amps.version>
         <plugin.testrunner.version>1.2.3</plugin.testrunner.version>
@@ -61,7 +61,13 @@
                 <artifactId>bitbucket-spi</artifactId>
                 <version>${bitbucket.version}</version>
                 <scope>provided</scope>
-            </dependency>
+	   </dependency>
+           <dependency>
+                <groupId>com.atlassian.bitbucket.server</groupId>
+		<artifactId>bitbucket-scm-common</artifactId>
+                <version>${bitbucket.version}</version>
+                <scope>provided</scope>
+           </dependency>	   
         </dependencies>
     </dependencyManagement>
 
@@ -112,6 +118,11 @@
             <artifactId>commons-lang</artifactId>
             <version>${commons-lang.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.atlassian.utils</groupId>
+            <artifactId>atlassian-processutils</artifactId>
+            <version>1.8.3</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

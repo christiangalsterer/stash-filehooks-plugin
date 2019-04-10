@@ -2,16 +2,13 @@ package org.christiangalsterer.stash.filehooks.plugin.hook;
 
 import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
-import com.atlassian.bitbucket.hook.HookResponse;
 import com.atlassian.bitbucket.hook.repository.*;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.scm.Command;
 import com.atlassian.bitbucket.scm.ScmCommandBuilder;
-import com.atlassian.bitbucket.scm.ScmCommandFactory;
-import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
+import com.atlassian.bitbucket.scm.ScmService;
 import com.atlassian.bitbucket.setting.Settings;
-
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -33,11 +30,12 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
     private static final String SETTINGS_SIZE_PREFIX = "size-";
     private static final String SETTINGS_BRANCHES_PATTERN_PREFIX = "pattern-branches-";
     private final ChangesetService changesetService;
-    private final commandFactory ScmCommandFactory;
+    private final ScmService scmService;
 
 
-    public FileSizeHook(ChangesetService changesetService) {
+    public FileSizeHook(ChangesetService changesetService, ScmService scmService) {
         this.changesetService = changesetService;
+        this.scmService = scmService;
     }
 
 
@@ -63,9 +61,9 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
 
 
     private Map<String, Long> getSizeForContentIds(final Repository repository, Iterable<String> contentIds) {
+        ScmCommandBuilder scmCommandBuilder = scmService.createBuilder(repository);
         CatFileBatchCheckHandler handler = new CatFileBatchCheckHandler(contentIds);
-        repository.getScmId().
-        Command<Map<String, Long>> cmd = commandFactory.builder(repository)
+        Command<Map<String, Long>> cmd = scmCommandBuilder
                 .command("cat-file")
                 .argument("--batch-check")
                 .inputHandler(handler)
@@ -140,21 +138,15 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
         }
 
         RepositoryHookResult result;
-
+        ArrayList<String> resultList = new ArrayList<>();
         boolean hookPassed = true;
 
         for (Long maxFileSize : pathAndSizes.keySet()) {
             Collection<String> paths = pathAndSizes.get(maxFileSize);
             if (paths.size() > 0) {
                 hookPassed = false;
-                RepositoryHookResult.Builder.class.out().println("=== File Size Hook ===");
-                hookResponse.out().println("");
-                for (String path : paths) {
-                    hookResponse.out().println(String.format("File [%s] is too large. Maximum allowed file size is %s bytes.", path, maxFileSize));
-                }
-                hookResponse.out().println("");
-                hookResponse.out().println("You may to consider to use Git Large File Storage in Bitbucket, see https://confluence.atlassian.com/bitbucket/git-large-file-storage-in-bitbucket-829078514.html");
-                hookResponse.out().println("======================");
+                for (String path : paths)
+                    resultList.add(String.format("File [%s] is too large. Maximum allowed file size is %s bytes.", path, maxFileSize));
             }
         }
 
@@ -162,6 +154,8 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
         if (hookPassed) {
             return RepositoryHookResult.accepted();
         } else {
-            return new RepositoryHookResult.Builder().veto("File [%s] is too large. Maximum allowed file size is %s bytes.", path, maxFileSize).build();
+            return RepositoryHookResult.rejected("files are too large", Arrays.toString(resultList.toArray()));
         }
+    }
+
 }

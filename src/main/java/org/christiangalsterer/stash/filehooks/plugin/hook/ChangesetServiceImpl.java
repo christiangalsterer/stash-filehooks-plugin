@@ -11,8 +11,8 @@ import com.atlassian.bitbucket.scm.ChangesetsCommandParameters;
 import com.atlassian.bitbucket.scm.CommitsCommandParameters;
 import com.atlassian.bitbucket.scm.ScmService;
 import com.atlassian.bitbucket.util.PageRequest;
-import com.atlassian.bitbucket.util.PageRequest;
-//import com.atlassian.bitbucket.util.PagedIter
+import com.atlassian.bitbucket.util.PageUtils;
+import com.atlassian.bitbucket.util.PagedIterable;
 import com.google.common.collect.Iterables;
 
 import java.util.*;
@@ -21,7 +21,7 @@ import java.util.stream.StreamSupport;
 
 public class ChangesetServiceImpl implements ChangesetService {
 
-    private static final PageRequest PAGE_REQUEST = PageRequest.MAX_PAGE_LIMIT;
+    private static final PageRequest PAGE_REQUEST = PageUtils.newRequest(0, PageRequest.MAX_PAGE_LIMIT);
     private static final int MAX_CHANGES_PER_COMMIT = PageRequest.MAX_PAGE_LIMIT;
 
     private final ScmService scmService;
@@ -102,8 +102,9 @@ public class ChangesetServiceImpl implements ChangesetService {
                 .map(Commit::getId)
                 .collect(Collectors.toSet());
 
+        scmService.
         if (!commitIds.isEmpty()) {
-            changesets = new (pageRequest -> scmService.getCommandFactory(repository).changesets(
+            changesets = new PagedIterable<>(pageRequest -> scmService.getCommandFactory(repository).changesets(
                     new ChangesetsCommandParameters.Builder()
                             .commitIds(commitIds)
                             .maxChangesPerCommit(MAX_CHANGES_PER_COMMIT)

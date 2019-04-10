@@ -48,16 +48,11 @@ import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.*;
  */
 public class FileNameHook implements PostRepositoryHook<RepositoryHookRequest> {
 
-    private static final Logger log = LoggerFactory.getLogger(LoggingPostRepositoryHook.class);
+    //private static final Logger log = LoggerFactory.getLogger(LoggingPostRepositoryHook.class);
 
     @Override
     public void postUpdate(@Nonnull PostRepositoryHookContext context,
                            @Nonnull RepositoryHookRequest hookRequest) {
-        log.info("[{}] {} updated [{}]",
-                hookRequest.getRepository(),
-                hookRequest.getTrigger().getId(),
-                hookRequest.getRefChanges().stream()
-                        .map(change -> change.getRef().getId())
-                        .collect(Collectors.joining(", ")));
+
     }
 }
