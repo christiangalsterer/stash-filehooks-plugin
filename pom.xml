@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.christiangalsterer</groupId>
-    <artifactId>stash-filehooks-plugin</artifactId>
-    <version>3.3.2</version>
+    <groupId>com.openet</groupId>
+    <artifactId>bitbucket-filehooks-plugin</artifactId>
+    <version>4.0</version>
     <organization>
         <name>Christian Galsterer</name>
         <url>https://github.com/christiangalsterer/stash-filehooks-plugin</url>
@@ -12,6 +12,10 @@
         <contributor>
             <name>Krzysztof Malinowski</name>
             <organization>Motorola Solutions, Inc.</organization>
+        </contributor>
+        <contributor>
+            <name>John Lawlor</name>
+            <organization>Openet Telecom Ltd.</organization>
         </contributor>
     </contributors>
     <licenses>
