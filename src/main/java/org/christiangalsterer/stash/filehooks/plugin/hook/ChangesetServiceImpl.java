@@ -3,7 +3,6 @@ package org.christiangalsterer.stash.filehooks.plugin.hook;
 import com.atlassian.bitbucket.commit.Changeset;
 import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
-import com.atlassian.bitbucket.nav.NavBuilder;
 import com.atlassian.bitbucket.repository.Ref;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
@@ -102,7 +101,6 @@ public class ChangesetServiceImpl implements ChangesetService {
                 .map(Commit::getId)
                 .collect(Collectors.toSet());
 
-        scmService.
         if (!commitIds.isEmpty()) {
             changesets = new PagedIterable<>(pageRequest -> scmService.getCommandFactory(repository).changesets(
                     new ChangesetsCommandParameters.Builder()

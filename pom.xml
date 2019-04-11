@@ -62,12 +62,30 @@
                 <version>${bitbucket.version}</version>
                 <scope>provided</scope>
 	   </dependency>
-           <dependency>
+            <dependency>
                 <groupId>com.atlassian.bitbucket.server</groupId>
-		<artifactId>bitbucket-scm-common</artifactId>
+		        <artifactId>bitbucket-scm-common</artifactId>
                 <version>${bitbucket.version}</version>
                 <scope>provided</scope>
-           </dependency>	   
+           </dependency>
+            <dependency>
+                <groupId>com.atlassian.bitbucket.server</groupId>
+                <artifactId>bitbucket-util</artifactId>
+                <version>${bitbucket.version}</version>
+                <scope>provided</scope>
+            </dependency>
+        <dependency>
+            <groupId>com.atlassian.bitbucket.server</groupId>
+            <artifactId>bitbucket-page-objects</artifactId>
+            <version>${bitbucket.version}</version>
+            <scope>provided</scope>
+        </dependency>
+            <dependency>
+                <groupId>com.atlassian.sal</groupId>
+                <artifactId>sal-api</artifactId>
+                <version>2.10.0</version>
+                <scope>provided</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -75,6 +93,11 @@
         <dependency>
             <groupId>com.atlassian.sal</groupId>
             <artifactId>sal-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.atlassian.bitbucket.server</groupId>
+            <artifactId>bitbucket-util</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
