@@ -84,7 +84,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
                     contentIds -> getSizeForContentIds(repository, contentIds));
 
             List<String> filteredPaths = filteredChanges.stream()
-                    .filter(change -> sizesByContentId.resolve(change.getContentId()) > maxFileSize)
+                    .filter(change -> sizesByContentId.resolve(change.getContentId(), 0L) > maxFileSize)
                     .map(change -> change.getPath().toString())
                     .collect(Collectors.toList());
 
