@@ -1,5 +1,9 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +23,8 @@ import java.util.stream.StreamSupport;
  * @param <V> type of value elements to be stored in cache
  */
 public class CachingResolver<K, V> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CachingResolver.class);
+
     private Map<K, V> cache = new HashMap<>();
 
     /**
@@ -29,6 +35,23 @@ public class CachingResolver<K, V> {
      */
     public V resolve(K key) {
         return cache.get(key);
+    }
+
+    /**
+     * Resolves requested key to a previously cached value.
+     *
+     * @param key          requested key
+     * @param defaultValue default value if cache is missed
+     * @return value if already cached or defaultValue if there is no cached value for the key
+     */
+    public V resolve(K key, V defaultValue) {
+        V value = cache.get(key);
+        if (value == null) {
+            LOGGER.debug("key {} not found, use default value {}", key, defaultValue);
+            return defaultValue;
+        } else {
+            return value;
+        }
     }
 
     /**
@@ -82,8 +105,8 @@ public class CachingResolver<K, V> {
         if (!keysToResolve.isEmpty()) {
             cache.putAll(resolveFunction.apply(keysToResolve));
         }
-
+        // not using Collectors.toMap for https://bugs.openjdk.java.net/browse/JDK-8148463
         return StreamSupport.stream(keys.spliterator(), false)
-                .collect(Collectors.toMap(key -> key, key -> cache.get(key)));
+                .collect(HashMap::new, (m, key) -> m.put(key, cache.get(key)), HashMap::putAll);
     }
 }

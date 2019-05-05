@@ -24,6 +24,14 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-filename-hook-configuration.png)
 
+## Debugging
+
+```
+mvn bitbucket:run
+curl -u admin -v -X PUT -d "" -H "Content-Type: application/json" http://localhost:7990/bitbucket/rest/api/latest/logs/rootLogger/debug
+
+```
+
 # Releases
 
 3.3.2 (2018-04-15)

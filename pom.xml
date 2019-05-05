@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.christiangalsterer</groupId>
     <artifactId>stash-filehooks-plugin</artifactId>
-    <version>3.3.2</version>
+    <version>3.3.3-SNAPSHOT</version>
     <organization>
         <name>Christian Galsterer</name>
         <url>https://github.com/christiangalsterer/stash-filehooks-plugin</url>
