@@ -29,7 +29,7 @@
     <packaging>atlassian-plugin</packaging>
 
     <properties>
-        <bitbucket.version>6.2.0</bitbucket.version>
+        <bitbucket.version>7.13.0</bitbucket.version>
         <bitbucket.data.version>${bitbucket.version}</bitbucket.data.version>
         <amps.version>6.3.0</amps.version>
         <plugin.testrunner.version>1.2.3</plugin.testrunner.version>
@@ -44,6 +44,13 @@
         <url>https://github.com/christiangalsterer/stash-filehooks-plugin</url>
         <tag>HEAD</tag>
     </scm>
+
+    <repositories>
+        <repository>
+        <id>atlassian</id>
+        <url>https://packages.atlassian.com/maven-3rdparty/</url>
+        </repository>
+    </repositories>
 
     <dependencyManagement>
         <dependencies>
