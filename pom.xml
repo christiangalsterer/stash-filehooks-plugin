@@ -88,7 +88,7 @@
 	   </dependency>
             <dependency>
                 <groupId>com.atlassian.bitbucket.server</groupId>
-		        <artifactId>bitbucket-scm-common</artifactId>
+	        <artifactId>bitbucket-scm-common</artifactId>
                 <version>${bitbucket.version}</version>
                 <scope>provided</scope>
            </dependency>
