@@ -3,11 +3,13 @@ package org.christiangalsterer.stash.filehooks.plugin.hook;
 import com.atlassian.bitbucket.commit.Changeset;
 import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
+import com.atlassian.bitbucket.repository.AbstractRefCallback;
 import com.atlassian.bitbucket.repository.Ref;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.scm.ChangesetsCommandParameters;
 import com.atlassian.bitbucket.scm.CommitsCommandParameters;
+import com.atlassian.bitbucket.scm.RefsCommandParameters;
 import com.atlassian.bitbucket.scm.ScmService;
 import com.atlassian.bitbucket.util.PageRequest;
 import com.atlassian.bitbucket.util.PageUtils;
@@ -90,7 +92,9 @@ public class ChangesetServiceImpl implements ChangesetService {
 
     private Set<Ref> getExistingRefs(final Repository repository) {
         Set<Ref> refs = new HashSet<>();
-        scmService.getCommandFactory(repository).heads(refs::add).call();
+        RefsCommandParameters.Builder refsCommandParametersBuilder = new RefsCommandParameters.Builder();
+        AbstractRefCallback refCallback = new AbstractRefCallback();
+        scmService.getCommandFactory(repository).refs(refsCommandParametersBuilder.build(), refCallback).call();
         return refs;
     }
 

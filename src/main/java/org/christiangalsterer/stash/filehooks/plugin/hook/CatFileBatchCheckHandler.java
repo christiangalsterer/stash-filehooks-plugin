@@ -5,7 +5,6 @@ import com.atlassian.bitbucket.io.LineReaderOutputHandler;
 import com.atlassian.bitbucket.scm.CommandInputHandler;
 import com.atlassian.bitbucket.scm.CommandOutputHandler;
 import com.atlassian.utils.process.IOUtils;
-import com.atlassian.utils.process.ProcessException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,7 +31,7 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	public void complete() {
 		try {
 			super.complete();
-		} catch (ProcessException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

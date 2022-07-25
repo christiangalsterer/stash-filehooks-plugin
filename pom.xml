@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.christiangalsterer</groupId>
     <artifactId>bitbucket-filehooks-plugin</artifactId>
-    <version>4.0</version>
+    <version>5.0</version>
     <organization>
         <name>Christian Galsterer</name>
         <url>https://github.com/christiangalsterer/stash-filehooks-plugin</url>
@@ -29,7 +29,7 @@
     <packaging>atlassian-plugin</packaging>
 
     <properties>
-        <bitbucket.version>7.13.0</bitbucket.version>
+        <bitbucket.version>8.1.1</bitbucket.version>
         <bitbucket.data.version>${bitbucket.version}</bitbucket.data.version>
         <amps.version>6.3.0</amps.version>
         <plugin.testrunner.version>1.2.3</plugin.testrunner.version>
@@ -50,8 +50,21 @@
         <id>atlassian</id>
         <url>https://packages.atlassian.com/maven-3rdparty/</url>
         </repository>
-    </repositories>
 
+	<repository> 
+	    <id>atlassian-public</id> 
+	    <url>https://packages.atlassian.com/mvn/maven-external/</url>       
+	    <snapshots> 
+		<enabled>true</enabled> 
+		<updatePolicy>never</updatePolicy>    
+		<checksumPolicy>warn</checksumPolicy> 
+	    </snapshots> 
+	    <releases> 
+		<enabled>true</enabled> 
+		<checksumPolicy>warn</checksumPolicy> 
+	    </releases> 
+	</repository>	
+    </repositories>
     <dependencyManagement>
         <dependencies>
             <dependency>
