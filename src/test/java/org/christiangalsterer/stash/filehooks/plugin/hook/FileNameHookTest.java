@@ -1,18 +1,18 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
+/*
 import com.atlassian.bitbucket.commit.CommitService;
 import com.atlassian.bitbucket.i18n.I18nService;
 import com.atlassian.bitbucket.repository.Repository;
+import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.setting.Settings;
-
-/*
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.junit.Assert.*;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class FileNameHookTest {
 

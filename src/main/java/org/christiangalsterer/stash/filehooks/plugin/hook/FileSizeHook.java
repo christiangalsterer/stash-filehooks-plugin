@@ -9,6 +9,9 @@ import com.atlassian.bitbucket.scm.Command;
 import com.atlassian.bitbucket.scm.ScmCommandBuilder;
 import com.atlassian.bitbucket.scm.ScmService;
 import com.atlassian.bitbucket.setting.Settings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -24,6 +27,7 @@ import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.matc
  */
 public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSizeHook.class);
     private static final int MAX_SETTINGS = 5;
     private static final String SETTINGS_INCLUDE_PATTERN_PREFIX = "pattern-";
     private static final String SETTINGS_EXCLUDE_PATTERN_PREFIX = "pattern-exclude-";
@@ -40,6 +44,7 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
 
 
     private List<FileSizeHookSetting> getSettings(Settings settings) {
+        LOGGER.info("Get hook configuration settings");
         List<FileSizeHookSetting> configurations = new ArrayList<>();
         String includeRegex;
         Long size;
@@ -55,24 +60,26 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
                 configurations.add(new FileSizeHookSetting(size, includeRegex, excludeRegex, branchesRegex));
             }
         }
-
+        LOGGER.info("Return hook configuration settings");
         return configurations;
     }
 
 
     private Map<String, Long> getSizeForContentIds(final Repository repository, Iterable<String> contentIds) {
-        ScmCommandBuilder scmCommandBuilder = scmService.createBuilder(repository);
+        LOGGER.info("Get size for content ids");
+        ScmCommandBuilder<?> scmCommandBuilder = scmService.createBuilder(repository);
         CatFileBatchCheckHandler handler = new CatFileBatchCheckHandler(contentIds);
         Command<Map<String, Long>> cmd = scmCommandBuilder
                 .command("cat-file")
                 .argument("--batch-check")
                 .inputHandler(handler)
                 .build(handler);
-        return filterOutNullSizes(cmd.call());
+        return filterOutNullSizes(Objects.requireNonNull(cmd.call()));
     }
 
 
     private Map<String, Long> filterOutNullSizes(Map<String, Long> sizes) {
+        LOGGER.info("Filter null sizes");
         return sizes.entrySet()
                 .stream()
                 .filter(entry -> entry.getValue() != null)
@@ -84,6 +91,7 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
     @Override
     public RepositoryHookResult preUpdate(@Nonnull PreRepositoryHookContext context,
                                           @Nonnull RepositoryHookRequest request) {
+        LOGGER.info("Start of preUpdate hook event");
         Repository repository = request.getRepository();
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
 
@@ -107,6 +115,7 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
 
             Set<Commit> commits =
                     changesetService.getCommitsBetween(repository, filteredRefChanges.collect(Collectors.toSet()));
+            LOGGER.info("Number of commits: " + commits.size());
 
             Set<Change> filteredChanges =
                     changesByCommit.flatBatchResolve(commits, x -> changesetService.getChanges(repository, x)).stream()
@@ -118,7 +127,7 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
                                         || !setting.getExcludePattern().get().matcher(fullPath).find());
                             })
                             .collect(Collectors.toSet());
-
+            LOGGER.info("Number of filtered changes: " + filteredChanges.size());
             // Pre-populate cache by resolving all required changes at once
             sizesByContentId.batchResolve(
                     filteredChanges.stream().map(Change::getContentId).collect(Collectors.toSet()),
@@ -128,16 +137,19 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
                     .filter(change -> sizesByContentId.resolve(change.getContentId()) > maxFileSize)
                     .map(change -> change.getPath().toString())
                     .collect(Collectors.toList());
-
+            LOGGER.info("Violating paths: " + violatingPaths.size() + ", filtered paths: " + filteredPaths.size());
             addAll(violatingPaths, filteredPaths);
 
             if (pathAndSizes.containsKey(maxFileSize))
                 addAll(violatingPaths, pathAndSizes.get(maxFileSize));
 
             pathAndSizes.put(maxFileSize, violatingPaths);
+
+            for (Map.Entry<Long, Collection<String>> entry : pathAndSizes.entrySet()) {
+                LOGGER.info("File size : " + entry.getKey() + ", file path: " + entry.getValue());
+            }
         }
 
-        RepositoryHookResult result;
         ArrayList<String> resultList = new ArrayList<>();
         boolean hookPassed = true;
 
@@ -149,13 +161,14 @@ public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
                     resultList.add(String.format("File [%s] is too large. Maximum allowed file size is %s bytes.", path, maxFileSize));
             }
         }
-
+        LOGGER.info("End of preUpdate repo hook event, hook passed: " + hookPassed);
 
         if (hookPassed) {
             return RepositoryHookResult.accepted();
         } else {
-            return RepositoryHookResult.rejected("files are too large", Arrays.toString(resultList.toArray()));
+            return RepositoryHookResult.rejected("Files are too large", Arrays.toString(resultList.toArray()));
         }
+
     }
 
 }

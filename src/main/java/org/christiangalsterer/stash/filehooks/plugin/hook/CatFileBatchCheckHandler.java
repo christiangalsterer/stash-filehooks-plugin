@@ -5,7 +5,10 @@ import com.atlassian.bitbucket.io.LineReaderOutputHandler;
 import com.atlassian.bitbucket.scm.CommandInputHandler;
 import com.atlassian.bitbucket.scm.CommandOutputHandler;
 import com.atlassian.utils.process.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +24,8 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 		super(StandardCharsets.UTF_8);
 		this.changesets = changesets;
 	}
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(CatFileBatchCheckHandler.class);
 
 	@Override
 	public Map<String, Long> getOutput() {
@@ -49,7 +54,7 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	}
 
 	@Override
-	public void process(OutputStream input) {
+	public void process(@Nonnull OutputStream input) {
 		try {
 			for (String c : changesets) {
 				input.write(c.getBytes(StandardCharsets.UTF_8.name()));
