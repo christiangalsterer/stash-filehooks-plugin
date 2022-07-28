@@ -25,6 +25,9 @@ The following example rejects all files matching the pattern **readme.md** when 
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-filename-hook-configuration.png)
 
 # Releases
+4.0.0 (2019-04-11)
+
+Add changes to support Bitbucket 6.x
 
 3.3.2 (2018-04-15)
 
@@ -108,6 +111,32 @@ The following example rejects all files matching the pattern **readme.md** when 
 
 * Reject commits containing files which exceed a configurable file size. Files can be identified by regular expressions.
 
+# Developer Guide
+
+### Building the plugin
+
+The following tools are required to build the plugin:
+```
+- java 1.8
+- atlassian sdk
+```
+Instructions on how to install the Atlassian SDK can be found [here](https://developer.atlassian.com/server/framework/atlassian-sdk/install-the-atlassian-sdk-on-a-linux-or-mac-system/)
+
+Clone the repository:
+
+```aidl
+git clone https://github.com/christiangalsterer/stash-filehooks-plugin.git
+```
+Edit the pom.xml in the root of the checkout, and change the line (change to match the version of Bitbucket you want to build against):
+
+```aidl
+<bitbucket.version>7.13.0</bitbucket.version>
+```
+Build the plugin
+```
+atlas-mvn clean install
+```
+
 # Roadmap
 
 
@@ -116,6 +145,7 @@ The following example rejects all files matching the pattern **readme.md** when 
 ```
    Copyright 2015 Christian Galsterer
    Copyright 2017 Motorola Solutions, Inc.
+   Copyright 2019 Openet Telecom, Ltd
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

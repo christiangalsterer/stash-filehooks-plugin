@@ -1,16 +1,12 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
 
-import com.atlassian.bitbucket.commit.Commit;
-import com.atlassian.bitbucket.commit.CommitRequest;
-import com.atlassian.bitbucket.commit.CommitService;
-
-
 /**
  * Determines the merge base of a pair of commits.
  */
 
-/**
+/*
+
 class MergeBaseResolver {
 
     private final GitCommandBuilderFactory builderFactory;
@@ -39,5 +35,4 @@ class MergeBaseResolver {
         return commitService.getCommit(commitRequest);
     }
 }
-
 */
