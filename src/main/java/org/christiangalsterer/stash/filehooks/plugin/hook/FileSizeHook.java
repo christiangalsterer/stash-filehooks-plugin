@@ -2,16 +2,13 @@ package org.christiangalsterer.stash.filehooks.plugin.hook;
 
 import com.atlassian.bitbucket.commit.Commit;
 import com.atlassian.bitbucket.content.Change;
-import com.atlassian.bitbucket.hook.HookResponse;
-import com.atlassian.bitbucket.hook.repository.PreReceiveRepositoryHook;
-import com.atlassian.bitbucket.hook.repository.RepositoryHookContext;
+import com.atlassian.bitbucket.hook.repository.*;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
 import com.atlassian.bitbucket.scm.Command;
-import com.atlassian.bitbucket.scm.PluginCommandBuilderFactory;
-import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
+import com.atlassian.bitbucket.scm.ScmCommandBuilder;
+import com.atlassian.bitbucket.scm.ScmService;
 import com.atlassian.bitbucket.setting.Settings;
-
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -25,25 +22,69 @@ import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.matc
 /**
  * Checks the size of a file in the pre-receive phase and rejects the push when the changeset contains files which exceed the configured file size limit.
  */
-public class FileSizeHook implements PreReceiveRepositoryHook {
+public class FileSizeHook implements PreRepositoryHook<RepositoryHookRequest> {
 
     private static final int MAX_SETTINGS = 5;
     private static final String SETTINGS_INCLUDE_PATTERN_PREFIX = "pattern-";
     private static final String SETTINGS_EXCLUDE_PATTERN_PREFIX = "pattern-exclude-";
     private static final String SETTINGS_SIZE_PREFIX = "size-";
     private static final String SETTINGS_BRANCHES_PATTERN_PREFIX = "pattern-branches-";
-
     private final ChangesetService changesetService;
-    private final PluginCommandBuilderFactory commandFactory;
+    private final ScmService scmService;
 
-    public FileSizeHook(ChangesetService changesetService, GitCommandBuilderFactory commandFactory) {
+
+    public FileSizeHook(ChangesetService changesetService, ScmService scmService) {
         this.changesetService = changesetService;
-        this.commandFactory = commandFactory;
+        this.scmService = scmService;
     }
 
+
+    private List<FileSizeHookSetting> getSettings(Settings settings) {
+        List<FileSizeHookSetting> configurations = new ArrayList<>();
+        String includeRegex;
+        Long size;
+        String excludeRegex;
+        String branchesRegex;
+
+        for (int i = 1; i <= MAX_SETTINGS; i++) {
+            includeRegex = settings.getString(SETTINGS_INCLUDE_PATTERN_PREFIX + i);
+            if (includeRegex != null) {
+                excludeRegex = settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i);
+                size = settings.getLong(SETTINGS_SIZE_PREFIX + i);
+                branchesRegex = settings.getString(SETTINGS_BRANCHES_PATTERN_PREFIX + i);
+                configurations.add(new FileSizeHookSetting(size, includeRegex, excludeRegex, branchesRegex));
+            }
+        }
+
+        return configurations;
+    }
+
+
+    private Map<String, Long> getSizeForContentIds(final Repository repository, Iterable<String> contentIds) {
+        ScmCommandBuilder scmCommandBuilder = scmService.createBuilder(repository);
+        CatFileBatchCheckHandler handler = new CatFileBatchCheckHandler(contentIds);
+        Command<Map<String, Long>> cmd = scmCommandBuilder
+                .command("cat-file")
+                .argument("--batch-check")
+                .inputHandler(handler)
+                .build(handler);
+        return filterOutNullSizes(cmd.call());
+    }
+
+
+    private Map<String, Long> filterOutNullSizes(Map<String, Long> sizes) {
+        return sizes.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+
+    @Nonnull
     @Override
-    public boolean onReceive(@Nonnull RepositoryHookContext context, @Nonnull Collection<RefChange> refChanges, @Nonnull HookResponse hookResponse) {
-        Repository repository = context.getRepository();
+    public RepositoryHookResult preUpdate(@Nonnull PreRepositoryHookContext context,
+                                          @Nonnull RepositoryHookRequest request) {
+        Repository repository = request.getRepository();
         List<FileSizeHookSetting> settings = getSettings(context.getSettings());
 
         FlatteningCachingResolver<Commit, Change> changesByCommit = new FlatteningCachingResolver<>();
@@ -57,7 +98,7 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             Long maxFileSize = setting.getSize();
             Optional<Pattern> branchesPattern = setting.getBranchesPattern();
 
-            Stream<RefChange> filteredRefChanges = refChanges.stream();
+            Stream<RefChange> filteredRefChanges = request.getRefChanges().stream();
 
             if (branchesPattern.isPresent()) {
                 filteredRefChanges = filteredRefChanges
@@ -96,60 +137,25 @@ public class FileSizeHook implements PreReceiveRepositoryHook {
             pathAndSizes.put(maxFileSize, violatingPaths);
         }
 
+        RepositoryHookResult result;
+        ArrayList<String> resultList = new ArrayList<>();
         boolean hookPassed = true;
 
         for (Long maxFileSize : pathAndSizes.keySet()) {
             Collection<String> paths = pathAndSizes.get(maxFileSize);
             if (paths.size() > 0) {
                 hookPassed = false;
-                hookResponse.out().println("=== File Size Hook ===");
-                hookResponse.out().println("");
-                for (String path : paths) {
-                    hookResponse.out().println(String.format("File [%s] is too large. Maximum allowed file size is %s bytes.", path, maxFileSize));
-                }
-                hookResponse.out().println("");
-                hookResponse.out().println("You may to consider to use Git Large File Storage in Bitbucket, see https://confluence.atlassian.com/bitbucket/git-large-file-storage-in-bitbucket-829078514.html");
-                hookResponse.out().println("======================");
+                for (String path : paths)
+                    resultList.add(String.format("File [%s] is too large. Maximum allowed file size is %s bytes.", path, maxFileSize));
             }
         }
 
-        return hookPassed;
-    }
 
-    private List<FileSizeHookSetting> getSettings(Settings settings) {
-        List<FileSizeHookSetting> configurations = new ArrayList<>();
-        String includeRegex;
-        Long size;
-        String excludeRegex;
-        String branchesRegex;
-
-        for (int i = 1; i <= MAX_SETTINGS; i++) {
-            includeRegex = settings.getString(SETTINGS_INCLUDE_PATTERN_PREFIX + i);
-            if (includeRegex != null) {
-                excludeRegex = settings.getString(SETTINGS_EXCLUDE_PATTERN_PREFIX + i);
-                size = settings.getLong(SETTINGS_SIZE_PREFIX + i);
-                branchesRegex = settings.getString(SETTINGS_BRANCHES_PATTERN_PREFIX + i);
-                configurations.add(new FileSizeHookSetting(size, includeRegex, excludeRegex, branchesRegex));
-            }
+        if (hookPassed) {
+            return RepositoryHookResult.accepted();
+        } else {
+            return RepositoryHookResult.rejected("files are too large", Arrays.toString(resultList.toArray()));
         }
-
-        return configurations;
     }
 
-    private Map<String, Long> getSizeForContentIds(final Repository repository, Iterable<String> contentIds) {
-        CatFileBatchCheckHandler handler = new CatFileBatchCheckHandler(contentIds);
-        Command<Map<String, Long>> cmd = commandFactory.builder(repository)
-                .command("cat-file")
-                .argument("--batch-check")
-                .inputHandler(handler)
-                .build(handler);
-        return filterOutNullSizes(cmd.call());
-    }
-
-    private Map<String, Long> filterOutNullSizes(Map<String, Long> sizes) {
-        return sizes.entrySet()
-                .stream()
-                .filter(entry -> entry.getValue() != null)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
 }

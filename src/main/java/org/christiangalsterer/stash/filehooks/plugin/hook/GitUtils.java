@@ -1,9 +1,6 @@
 package org.christiangalsterer.stash.filehooks.plugin.hook;
 
-import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.scm.CommandBuilderSupport;
-import com.atlassian.bitbucket.scm.git.GitScmConfig;
-
+/*
 class GitUtils {
 
     private GitUtils() {
@@ -15,3 +12,4 @@ class GitUtils {
         }
     }
 }
+*/

@@ -8,23 +8,17 @@ import com.atlassian.bitbucket.content.Change;
 import com.atlassian.bitbucket.content.ChangeType;
 import com.atlassian.bitbucket.content.ChangesRequest;
 import com.atlassian.bitbucket.hook.HookResponse;
-import com.atlassian.bitbucket.hook.repository.PreReceiveRepositoryHook;
 import com.atlassian.bitbucket.hook.repository.RepositoryHookContext;
-import com.atlassian.bitbucket.hook.repository.RepositoryMergeRequestCheck;
 import com.atlassian.bitbucket.hook.repository.RepositoryMergeRequestCheckContext;
 import com.atlassian.bitbucket.i18n.I18nService;
 import com.atlassian.bitbucket.pull.PullRequest;
 import com.atlassian.bitbucket.pull.PullRequestRef;
 import com.atlassian.bitbucket.repository.RefChange;
 import com.atlassian.bitbucket.repository.Repository;
-import com.atlassian.bitbucket.scm.git.GitScmConfig;
-import com.atlassian.bitbucket.scm.git.command.GitCommandBuilderFactory;
 import com.atlassian.bitbucket.scm.pull.MergeRequest;
-import com.atlassian.bitbucket.setting.RepositorySettingsValidator;
 import com.atlassian.bitbucket.setting.Settings;
 import com.atlassian.bitbucket.setting.SettingsValidationErrors;
 import com.google.common.base.Strings;
-import com.google.common.collect.*;
 
 import javax.annotation.Nonnull;
 
@@ -43,6 +37,8 @@ import static org.christiangalsterer.stash.filehooks.plugin.hook.Predicates.*;
 /**
  * Checks the name and path of a file in the pre-receive phase and rejects the push when the changeset contains files which match the configured file name pattern.
  */
+
+/**
 public class FileNameHook implements PreReceiveRepositoryHook, RepositorySettingsValidator, RepositoryMergeRequestCheck {
 
     private static final String SETTINGS_INCLUDE_PATTERN = "pattern";
@@ -51,14 +47,14 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
 
     private final ChangesetService changesetService;
     private final I18nService i18n;
-    private final CommitService commitService; 
+    private final CommitService commitService;
     private final MergeBaseResolver mergeBaseResolver;
 
     public FileNameHook(GitCommandBuilderFactory builderFactory, CommitService commitService, ChangesetService changesetService, I18nService i18n, GitScmConfig gitScmConfig) {
         this.changesetService = changesetService;
         this.i18n = i18n;
         this.commitService = commitService;
-        this.mergeBaseResolver = new MergeBaseResolver(builderFactory, gitScmConfig, commitService); 
+        this.mergeBaseResolver = new MergeBaseResolver(builderFactory, gitScmConfig, commitService);
     }
 
     @Override
@@ -136,28 +132,24 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
             }
         }
     }
-	
-    /**
-     * Callback, collecting all the paths, changed in the requested change 
-     * range. 
-     */ 
+
     private static class ChangedPathsCollector extends AbstractChangeCallback {
         private final Collection<String> changedPaths = new HashSet<>();
- 
-        @Override 
+
+        @Override
         public boolean onChange(Change change) throws IOException {
-        	if (change.getType() != ChangeType.DELETE) {
+            if (change.getType() != ChangeType.DELETE) {
                 changedPaths.add(change.getPath().toString());
-        	}
-            return true; 
-        } 
- 
+            }
+            return true;
+        }
+
         Collection<String> getChangedPaths() {
-            return changedPaths; 
-        } 
- 
-    }  
-  			 	
+            return changedPaths;
+        }
+
+    }
+
     private String getPullRequestError(Collection<String> filteredFiles) {
         final StringBuilder sb = new StringBuilder();
         final Iterator<String> iter = filteredFiles.iterator();
@@ -169,38 +161,40 @@ public class FileNameHook implements PreReceiveRepositoryHook, RepositorySetting
         }
         return sb.toString();
     }
-	 
-	@Override
-	public void check(RepositoryMergeRequestCheckContext context) {
-		final MergeRequest request = context.getMergeRequest();
-		final PullRequest pr = request.getPullRequest();
-		final Commit prFrom = getChangeSet(pr.getFromRef());
-		final Commit prTo = getChangeSet(pr.getToRef());
-		final Commit base = mergeBaseResolver.findMergeBase(prFrom, prTo);
-	    final FileNameHookSetting setting = getSettings(context.getSettings());
-	    
-		final ChangesRequest.Builder builder = new ChangesRequest.Builder(prFrom.getRepository(), prFrom.getId()); 
-        if (base.getId() != null) { 
-            builder.sinceId(base.getId()); 
-        } 
-        final ChangesRequest pathsRequest = builder.build(); 
+
+    @Override
+    public void check(RepositoryMergeRequestCheckContext context) {
+        final MergeRequest request = context.getMergeRequest();
+        final PullRequest pr = request.getPullRequest();
+        final Commit prFrom = getChangeSet(pr.getFromRef());
+        final Commit prTo = getChangeSet(pr.getToRef());
+        final Commit base = mergeBaseResolver.findMergeBase(prFrom, prTo);
+        final FileNameHookSetting setting = getSettings(context.getSettings());
+
+        final ChangesRequest.Builder builder = new ChangesRequest.Builder(prFrom.getRepository(), prFrom.getId());
+        if (base.getId() != null) {
+            builder.sinceId(base.getId());
+        }
+        final ChangesRequest pathsRequest = builder.build();
         final ChangedPathsCollector pathsCallback = new ChangedPathsCollector();
         commitService.streamChanges(pathsRequest, pathsCallback);
-	    Collection<String> filteredFiles = pathsCallback.getChangedPaths();
+        Collection<String> filteredFiles = pathsCallback.getChangedPaths();
         filteredFiles = filteredFiles.stream().filter(setting.getIncludePattern().asPredicate()).collect(Collectors.toList());
-		 
-		if(setting.getExcludePattern().isPresent()) {
-			 Pattern excludePattern = setting.getExcludePattern().get();
-			 filteredFiles = filteredFiles.stream().filter(excludePattern.asPredicate().negate()).collect(Collectors.toList());
-		}
-	    
-	    if (filteredFiles.size() > 0) {
-	        request.veto(i18n.getText("filename-hook.mergecheck.veto", "File Name Hook: The following files violate the file name pattern [{0}]:", setting.getIncludePattern().pattern()), getPullRequestError(filteredFiles));
-	    }     
-	}
-	
+
+        if(setting.getExcludePattern().isPresent()) {
+            Pattern excludePattern = setting.getExcludePattern().get();
+            filteredFiles = filteredFiles.stream().filter(excludePattern.asPredicate().negate()).collect(Collectors.toList());
+        }
+
+        if (filteredFiles.size() > 0) {
+            request.veto(i18n.getText("filename-hook.mergecheck.veto", "File Name Hook: The following files violate the file name pattern [{0}]:", setting.getIncludePattern().pattern()), getPullRequestError(filteredFiles));
+        }
+    }
+
     private Commit getChangeSet(PullRequestRef prRef) {
         final CommitRequest.Builder builder = new CommitRequest.Builder(prRef.getRepository(), prRef.getLatestCommit());
         return commitService.getCommit(builder.build());
     }
 }
+
+*/
