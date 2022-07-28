@@ -25,6 +25,25 @@ The following example rejects all files matching the pattern **readme.md** when 
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-filename-hook-configuration.png)
 
 # Releases
+5.0.4
+
+Fix bug where refs were not collected properly
+
+5.0.3
+
+Code improvements as suggested by Intellij
+
+5.0.2
+
+Add logging support via logback, logs will now be written to atlassian-bitbucket.log when debug is enabled in the Bitbucket GUI
+
+5.0.1
+
+Minor updates
+
+5.0.0
+
+Updates to support Bitbucket 8.x
 
 3.3.2 (2018-04-15)
 
@@ -107,6 +126,32 @@ The following example rejects all files matching the pattern **readme.md** when 
 1.0.0 (2015-01-15)
 
 * Reject commits containing files which exceed a configurable file size. Files can be identified by regular expressions.
+
+# Developer Guide
+
+### Building the plugin
+
+The following tools are required to build the plugin:
+```
+- java 1.8
+- atlassian sdk
+```
+Instructions on how to install the Atlassian SDK can be found [here](https://developer.atlassian.com/server/framework/atlassian-sdk/install-the-atlassian-sdk-on-a-linux-or-mac-system/)
+
+Clone the repository:
+
+```
+git clone https://github.com/christiangalsterer/stash-filehooks-plugin.git
+```
+Edit the pom.xml in the root of the checkout, and change the line (change to match the version of Bitbucket you want to build against):
+
+```
+<bitbucket.version>7.13.0</bitbucket.version>
+```
+Build the plugin
+```
+atlas-mvn clean install
+```
 
 # Roadmap
 
