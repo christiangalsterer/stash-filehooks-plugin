@@ -19,7 +19,7 @@ import java.util.stream.StreamSupport;
  * @param <V> type of value elements to be stored in cache
  */
 public class CachingResolver<K, V> {
-    private Map<K, V> cache = new HashMap<>();
+    private final Map<K, V> cache = new HashMap<>();
 
     /**
      * Resolves requested key to a previously cached value.

@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 
 class FileNameHookSetting {
 
-    private Pattern includePattern;
-    private Optional<Pattern> excludePattern;
-    private Optional<Pattern> branchesPattern;
+    private final Pattern includePattern;
+    private final Optional<Pattern> excludePattern;
+    private final Optional<Pattern> branchesPattern;
 
     FileNameHookSetting(String includePattern, String excludePattern, String branchesPattern) {
         this.includePattern = Pattern.compile(includePattern);

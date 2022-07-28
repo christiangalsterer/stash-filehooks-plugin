@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 
 class FileSizeHookSetting {
 
-    private Long size;
-    private Pattern includePattern;
+    private final Long size;
+    private final Pattern includePattern;
     private Optional<Pattern> excludePattern;
     private Optional<Pattern> branchesPattern;
 

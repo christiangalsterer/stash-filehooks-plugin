@@ -5,8 +5,10 @@ import com.atlassian.bitbucket.io.LineReaderOutputHandler;
 import com.atlassian.bitbucket.scm.CommandInputHandler;
 import com.atlassian.bitbucket.scm.CommandOutputHandler;
 import com.atlassian.utils.process.IOUtils;
-import com.atlassian.utils.process.ProcessException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -23,6 +25,8 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 		this.changesets = changesets;
 	}
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(CatFileBatchCheckHandler.class);
+
 	@Override
 	public Map<String, Long> getOutput() {
 		return values;
@@ -32,7 +36,7 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	public void complete() {
 		try {
 			super.complete();
-		} catch (ProcessException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -40,7 +44,7 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	@Override
 	protected void processReader(LineReader reader) throws IOException {
 		String line;
-		while ((line = resetWatchdogAndReadLine(reader)) != null) {
+		while ((line = reader.readLine()) != null) {
 			String[] split = line.split(" ");
 			// Only process blobs (ie files), ignore folders
 			if (split.length == 3 && split[1].equals("blob")) {
@@ -50,7 +54,7 @@ public class CatFileBatchCheckHandler extends LineReaderOutputHandler implements
 	}
 
 	@Override
-	public void process(OutputStream input) {
+	public void process(@Nonnull OutputStream input) {
 		try {
 			for (String c : changesets) {
 				input.write(c.getBytes(StandardCharsets.UTF_8.name()));
