@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.openet</groupId>
     <artifactId>bitbucket-filehooks-plugin</artifactId>
-    <version>4.0</version>
+    <version>4.0.0</version>
     <organization>
         <name>Christian Galsterer</name>
         <url>https://github.com/christiangalsterer/stash-filehooks-plugin</url>
@@ -31,7 +31,7 @@
     <properties>
         <bitbucket.version>6.2.0</bitbucket.version>
         <bitbucket.data.version>${bitbucket.version}</bitbucket.data.version>
-        <amps.version>6.3.0</amps.version>
+        <amps.version>6.2.0</amps.version>
         <plugin.testrunner.version>1.2.3</plugin.testrunner.version>
         <maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
