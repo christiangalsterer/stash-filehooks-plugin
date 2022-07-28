@@ -25,23 +25,23 @@ The following example rejects all files matching the pattern **readme.md** when 
 ![File Size Hook Configuration](screenshots/file-hooks-plugin-filename-hook-configuration.png)
 
 # Releases
-5.0.4
+5.0.4 (2022-07-28)
 
 Fix bug where refs were not collected properly
 
-5.0.3
+5.0.3 (2022-07-27)
 
 Code improvements as suggested by Intellij
 
-5.0.2
+5.0.2 (2022-07-22)
 
 Add logging support via logback, logs will now be written to atlassian-bitbucket.log when debug is enabled in the Bitbucket GUI
 
-5.0.1
+5.0.1 (2022-07-20)
 
 Minor updates
 
-5.0.0
+5.0.0 (2022-07-01)
 
 Updates to support Bitbucket 8.x
 
